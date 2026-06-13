@@ -98,14 +98,90 @@
     .result-panel { border-left: none; border-top: 1px solid var(--border); overflow: visible; }
     nav { padding: 0 20px; }
   }
+
+  /* Intro Modal */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(26,26,24,0.55);
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px; opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  }
+  .modal-overlay.show { opacity: 1; pointer-events: auto; }
+  .modal {
+    background: var(--surface); border-radius: 16px;
+    max-width: 540px; width: 100%; max-height: 88vh; overflow-y: auto;
+    padding: 36px 36px 28px; transform: translateY(12px); transition: transform 0.25s;
+  }
+  .modal-overlay.show .modal { transform: translateY(0); }
+  .modal-eyebrow { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--accent); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 12px; }
+  .modal h2 { font-size: 24px; font-weight: 700; line-height: 1.35; margin-bottom: 8px; }
+  .modal-lead { font-size: 14px; color: var(--text-secondary); line-height: 1.8; margin-bottom: 24px; }
+  .modal-section { margin-bottom: 20px; }
+  .modal-section-title { font-size: 13px; font-weight: 500; color: var(--text-primary); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .modal-section-title .ic { width: 22px; height: 22px; border-radius: 6px; background: var(--accent-light); color: var(--accent); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+  .modal-section p { font-size: 13px; color: var(--text-secondary); line-height: 1.75; }
+  .modal-list { list-style: none; display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+  .modal-list li { font-size: 13px; color: var(--text-secondary); line-height: 1.6; padding-left: 18px; position: relative; }
+  .modal-list li::before { content: '—'; position: absolute; left: 0; color: var(--accent); }
+  .modal-disclaimer { background: #FBF7EC; border: 1px solid #E8DFC8; border-radius: 10px; padding: 14px 16px; font-size: 12px; color: #7A6A3E; line-height: 1.7; margin-bottom: 24px; }
+  .modal-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 4px; }
+  .modal-check { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); cursor: pointer; user-select: none; }
+  .modal-check input { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
+  .modal-btn { background: var(--accent); color: white; border: none; border-radius: 8px; padding: 11px 24px; font-size: 14px; font-weight: 500; font-family: inherit; cursor: pointer; transition: background 0.15s; white-space: nowrap; }
+  .modal-btn:hover { background: #185a3e; }
+
+  .basis-block { font-size: 11px; color: var(--text-muted); line-height: 1.7; background: var(--bg); border-radius: 8px; padding: 12px 14px; }
+  .basis-block strong { color: var(--text-secondary); font-weight: 500; }
+  .help-btn { font-size: 12px; color: var(--text-secondary); text-decoration: none; display: flex; align-items: center; gap: 5px; cursor: pointer; }
+  .help-btn:hover { color: var(--accent); }
+
 </style>
 </head>
 <body>
+
+<div class="modal-overlay" id="intro-modal">
+  <div class="modal">
+    <div class="modal-eyebrow">Tourism Strategy Dashboard</div>
+    <h2>47都道府県 観光戦略分析へようこそ</h2>
+    <p class="modal-lead">このダッシュボードは、全国47都道府県の観光戦略を「長野県の視点」から横断的に比較し、他県から学べる施策や競合関係を発見するためのリサーチツールです。</p>
+
+    <div class="modal-section">
+      <div class="modal-section-title"><span class="ic">①</span>使い方</div>
+      <p>左の日本地図から気になる都道府県をクリックすると、その県の観光戦略スコア・重点施策・インバウンド戦略、そして長野県との比較分析が右側に表示されます。長野県をクリックすると自己分析モードになります。</p>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title"><span class="ic">②</span>見られる分析</div>
+      <ul class="modal-list">
+        <li>4つの観点（インバウンド／デジタル化／持続可能性／独自性）によるスコア評価</li>
+        <li>各県の重点施策と代表的な観光資源</li>
+        <li>長野県と比べた強み・競合・参考にできる独自施策</li>
+      </ul>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title"><span class="ic">③</span>対象とする方</div>
+      <p>観光地域づくり法人（DMO）の職員、観光協会、自治体の観光担当者、宿泊・体験事業者など、長野県の観光戦略を考える立場の方を想定しています。</p>
+    </div>
+
+    <div class="modal-disclaimer">
+      <strong>⚠️ 分析の性質について</strong><br>
+      本ダッシュボードの評価・スコアは、AIが学習した一般的な観光知識に基づく定性的な推定です。観光庁の統計や各県の観光計画などの個別実測データを直接参照したものではなく、絶対的な評価ではありません。施策検討の「出発点・たたき台」としてご活用ください。
+    </div>
+
+    <div class="modal-footer">
+      <label class="modal-check"><input type="checkbox" id="dont-show"> 次回から表示しない</label>
+      <button class="modal-btn" id="start-btn">ダッシュボードを見る →</button>
+    </div>
+  </div>
+</div>
+
 
 <nav>
   <a class="nav-back" href="index.html">← 一覧へ戻る</a>
   <div class="nav-divider"></div>
   <span class="nav-title">47都道府県 観光戦略分析</span>
+  <span class="help-btn" id="help-btn">ⓘ このダッシュボードについて</span>
   <span class="nav-badge">AI分析</span>
 </nav>
 
@@ -253,7 +329,7 @@ function renderResult(nameJa, nameEn, d, isNagano) {
     <div><div class="section-label">インバウンド戦略</div><div class="analysis-text">${d.inboundStrategy}</div></div>
     <div><div class="section-label">${sectionTitle}</div>${cmpHtml}</div>
     <div><div class="section-label">${learnTitle}</div><div class="analysis-text">${d.learnings}</div></div>
-    <div class="disclaimer">※ スコアと分析はAIによる参考評価です。施策検討の出発点としてご活用ください。</div>`;
+    <div><div class="section-label">評価の基準と根拠</div><div class="basis-block"><strong>評価軸：</strong>インバウンド（訪日客誘致力）／デジタル化（オンライン予約・多言語対応等）／持続可能性（環境・地域共生）／独自性（他県にない資源）の4観点で評価しています。<br><br>${d.basis || ''}</div></div>`;
   rc.style.display = 'flex'; rc.classList.add('show');
 
   requestAnimationFrame(() => {
@@ -263,6 +339,45 @@ function renderResult(nameJa, nameEn, d, isNagano) {
     });
   });
 }
+
+// ===== Intro Modal =====
+(function() {
+  const modal = document.getElementById('intro-modal');
+  const startBtn = document.getElementById('start-btn');
+  const helpBtn = document.getElementById('help-btn');
+  const dontShow = document.getElementById('dont-show');
+  const STORAGE_KEY = 'naganoDmoIntroHidden';
+
+  function openModal() { modal.classList.add('show'); }
+  function closeModal() { modal.classList.remove('show'); }
+
+  // 初回表示判定（localStorage が使えない環境でも安全に）
+  let hidden = false;
+  try { hidden = localStorage.getItem(STORAGE_KEY) === 'true'; } catch(e) {}
+  if (!hidden) {
+    // 少し遅延させて表示（地図描画と被らないように）
+    setTimeout(openModal, 300);
+  }
+
+  startBtn.addEventListener('click', () => {
+    if (dontShow.checked) {
+      try { localStorage.setItem(STORAGE_KEY, 'true'); } catch(e) {}
+    }
+    closeModal();
+  });
+
+  // ナビの「ⓘ」ボタンでいつでも再表示
+  helpBtn.addEventListener('click', () => {
+    dontShow.checked = false;
+    openModal();
+  });
+
+  // オーバーレイの外側クリックで閉じる
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+})();
+
 </script>
 </body>
 </html>
