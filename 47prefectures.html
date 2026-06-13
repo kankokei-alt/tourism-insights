@@ -130,6 +130,15 @@
   .modal-btn { background: var(--accent); color: white; border: none; border-radius: 8px; padding: 11px 24px; font-size: 14px; font-weight: 500; font-family: inherit; cursor: pointer; transition: background 0.15s; white-space: nowrap; }
   .modal-btn:hover { background: #185a3e; }
 
+
+  .realdata-card { background: var(--accent); color: white; border-radius: 12px; padding: 16px 18px; margin-bottom: 4px; }
+  .realdata-label { font-size: 11px; opacity: 0.85; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+  .realdata-badge { font-size: 9px; background: rgba(255,255,255,0.25); padding: 2px 7px; border-radius: 10px; letter-spacing: 0.03em; }
+  .realdata-value { font-size: 28px; font-weight: 700; line-height: 1.1; font-family: 'DM Mono', monospace; }
+  .realdata-sub { font-size: 12px; opacity: 0.9; margin-top: 4px; }
+  .realdata-source { font-size: 10px; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
+  .realdata-source a { color: var(--accent); }
+
   .basis-block { font-size: 11px; color: var(--text-muted); line-height: 1.7; background: var(--bg); border-radius: 8px; padding: 12px 14px; }
   .basis-block strong { color: var(--text-secondary); font-weight: 500; }
   .help-btn { font-size: 12px; color: var(--text-secondary); text-decoration: none; display: flex; align-items: center; gap: 5px; cursor: pointer; }
@@ -153,7 +162,8 @@
     <div class="modal-section">
       <div class="modal-section-title"><span class="ic">②</span>見られる分析</div>
       <ul class="modal-list">
-        <li>4つの観点（インバウンド／デジタル化／持続可能性／独自性）によるスコア評価</li>
+        <li>年間観光来訪者数の実データと全国順位（日本観光振興協会オープンデータ）</li>
+        <li>4つの観点（インバウンド／デジタル化／持続可能性／独自性）によるAIスコア評価</li>
         <li>各県の重点施策と代表的な観光資源</li>
         <li>長野県と比べた強み・競合・参考にできる独自施策</li>
       </ul>
@@ -165,8 +175,8 @@
     </div>
 
     <div class="modal-disclaimer">
-      <strong>⚠️ 分析の性質について</strong><br>
-      本ダッシュボードの評価・スコアは、AIが学習した一般的な観光知識に基づく定性的な推定です。観光庁の統計や各県の観光計画などの個別実測データを直接参照したものではなく、絶対的な評価ではありません。施策検討の「出発点・たたき台」としてご活用ください。
+      <strong>⚠️ データの性質について</strong><br>
+      「年間観光来訪者数」は日本観光振興協会のオープンデータに基づく<strong>実データ</strong>です。一方、4観点のスコアと比較分析は、AIが学習した一般的な観光知識に基づく<strong>定性的な推定</strong>であり、絶対評価ではありません。施策検討の「出発点・たたき台」としてご活用ください。
     </div>
 
     <div class="modal-footer">
@@ -324,7 +334,15 @@ function renderResult(nameJa, nameEn, d, isNagano) {
       <div class="result-pref-name">${nameJa}</div>
       <div class="result-pref-sub">${shortEn} · Analysis for Nagano DMO</div>
     </div>
-    <div><div class="section-label">観光戦略スコア</div><div class="score-grid">${scoreHtml}</div></div>
+    ${d.realData ? `<div>
+      <div class="realdata-card">
+        <div class="realdata-label">年間観光来訪者数（2025年・延べ）<span class="realdata-badge">実データ</span></div>
+        <div class="realdata-value">${d.realData.visitorsLabel}</div>
+        <div class="realdata-sub">全国 ${d.realData.rank}位 / 47都道府県</div>
+      </div>
+      <div class="realdata-source">出典：日本観光振興協会「デジタル観光統計オープンデータ」2025年 都道府県観光来訪者数（12ヶ月合計）<br><a href="https://www.nihon-kankou.or.jp/home/jigyou/research/d-toukei/" target="_blank">nihon-kankou.or.jp</a></div>
+    </div>` : ''}
+    <div><div class="section-label">観光戦略スコア（AI推定）</div><div class="score-grid">${scoreHtml}</div></div>
     <div><div class="section-label">重点施策</div><div class="tag-list">${tagsHtml}</div></div>
     <div><div class="section-label">インバウンド戦略</div><div class="analysis-text">${d.inboundStrategy}</div></div>
     <div><div class="section-label">${sectionTitle}</div>${cmpHtml}</div>
