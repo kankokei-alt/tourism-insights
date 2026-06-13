@@ -8,63 +8,34 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script src="japan_map_data.js"></script>
+<script src="pref_analysis_data.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg: #F2F0EB;
-    --surface: #FFFFFF;
-    --text-primary: #1A1A18;
-    --text-secondary: #6B6B64;
-    --text-muted: #A8A89E;
-    --accent: #1D6A4A;
-    --accent-light: #E8F3EE;
-    --accent-mid: #2E8B5F;
-    --border: rgba(26,26,24,0.1);
-    --border-strong: rgba(26,26,24,0.2);
+    --bg: #F2F0EB; --surface: #FFFFFF;
+    --text-primary: #1A1A18; --text-secondary: #6B6B64; --text-muted: #A8A89E;
+    --accent: #1D6A4A; --accent-light: #E8F3EE; --accent-mid: #2E8B5F;
+    --border: rgba(26,26,24,0.1); --border-strong: rgba(26,26,24,0.2);
   }
   html, body { height: 100%; }
   body { font-family: 'Noto Sans JP', sans-serif; background: var(--bg); color: var(--text-primary); display: flex; flex-direction: column; }
 
-  nav {
-    flex-shrink: 0;
-    background: rgba(242,240,235,0.96);
-    border-bottom: 1px solid var(--border);
-    padding: 0 40px; display: flex; align-items: center; gap: 12px; height: 56px;
-  }
+  nav { flex-shrink: 0; background: rgba(242,240,235,0.96); border-bottom: 1px solid var(--border); padding: 0 40px; display: flex; align-items: center; gap: 12px; height: 56px; }
   .nav-back { font-size: 13px; color: var(--text-secondary); text-decoration: none; display: flex; align-items: center; gap: 6px; transition: color 0.15s; }
   .nav-back:hover { color: var(--accent); }
   .nav-divider { width: 1px; height: 16px; background: var(--border-strong); }
   .nav-title { font-size: 13px; font-weight: 500; }
   .nav-badge { margin-left: auto; font-size: 10px; font-family: 'DM Mono', monospace; padding: 3px 10px; border-radius: 20px; background: var(--accent-light); color: var(--accent); }
 
-  .layout {
-    flex: 1;
-    display: grid;
-    grid-template-columns: 1fr 420px;
-    overflow: hidden;
-    min-height: 0;
-  }
+  .layout { flex: 1; display: grid; grid-template-columns: 1fr 430px; overflow: hidden; min-height: 0; }
 
-  .map-panel {
-    display: flex; flex-direction: column;
-    padding: 20px 24px 16px;
-    overflow: hidden;
-    min-height: 0;
-  }
+  .map-panel { display: flex; flex-direction: column; padding: 20px 24px 16px; overflow: hidden; min-height: 0; }
   .panel-hint { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
   .panel-hint::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
   @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
 
-  #map-container {
-    flex: 1;
-    min-height: 0;
-    position: relative;
-  }
-  #japan-svg {
-    width: 100%;
-    height: 100%;
-    display: block;
-  }
+  #map-container { flex: 1; min-height: 0; position: relative; }
+  #japan-svg { width: 100%; height: 100%; display: block; }
   #japan-svg path { stroke: var(--bg); stroke-width: 0.6; cursor: pointer; transition: fill 0.12s; }
   #japan-svg path.pref-default { fill: #C8C5BC; }
   #japan-svg path.pref-nagano { fill: #A8CCBA; }
@@ -75,22 +46,10 @@
   .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-secondary); }
   .legend-dot { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
 
-  .tooltip {
-    position: fixed; pointer-events: none; z-index: 999;
-    background: rgba(26,26,24,0.88); color: white;
-    font-size: 12px; font-family: 'Noto Sans JP', sans-serif;
-    padding: 5px 11px; border-radius: 6px;
-    opacity: 0; transition: opacity 0.1s;
-    white-space: nowrap;
-  }
+  .tooltip { position: fixed; pointer-events: none; z-index: 999; background: rgba(26,26,24,0.88); color: white; font-size: 12px; padding: 5px 11px; border-radius: 6px; opacity: 0; transition: opacity 0.1s; white-space: nowrap; }
   .tooltip.show { opacity: 1; }
 
-  .result-panel {
-    border-left: 1px solid var(--border);
-    background: var(--surface);
-    display: flex; flex-direction: column;
-    overflow-y: auto;
-  }
+  .result-panel { border-left: 1px solid var(--border); background: var(--surface); display: flex; flex-direction: column; overflow-y: auto; }
 
   .result-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center; gap: 14px; }
   .empty-icon { font-size: 44px; opacity: 0.2; }
@@ -128,14 +87,14 @@
   .compare-row:last-child { border-bottom: none; }
   .compare-icon { font-size: 15px; flex-shrink: 0; padding-top: 1px; }
   .compare-text { font-size: 13px; line-height: 1.7; color: var(--text-secondary); }
+  .compare-text strong { color: var(--text-primary); font-weight: 500; }
 
   .analysis-text { font-size: 13px; line-height: 1.85; color: var(--text-secondary); }
-
-  .error-block { margin: 24px; padding: 16px; background: #FEF2F2; border-radius: 8px; font-size: 13px; color: #991B1B; line-height: 1.7; }
+  .disclaimer { font-size: 11px; color: var(--text-muted); line-height: 1.6; padding-top: 8px; border-top: 1px dashed var(--border); }
 
   @media (max-width: 860px) {
     .layout { grid-template-columns: 1fr; overflow: visible; }
-    .map-panel { height: 60vw; min-height: 320px; }
+    .map-panel { height: 70vw; min-height: 340px; }
     .result-panel { border-left: none; border-top: 1px solid var(--border); overflow: visible; }
     nav { padding: 0 20px; }
   }
@@ -153,9 +112,7 @@
 <div class="layout">
   <div class="map-panel">
     <div class="panel-hint">都道府県をクリックして長野県との比較分析</div>
-    <div id="map-container">
-      <svg id="japan-svg"></svg>
-    </div>
+    <div id="map-container"><svg id="japan-svg"></svg></div>
     <div class="legend">
       <div class="legend-item"><div class="legend-dot" style="background:#A8CCBA;"></div>長野県</div>
       <div class="legend-item"><div class="legend-dot" style="background:#1D6A4A;"></div>選択中</div>
@@ -183,131 +140,107 @@ const NAGANO_ID = 20;
 let selectedPath = null;
 const tooltip = document.getElementById('tooltip');
 
+// 沖縄を本土に近づけて表示するため、描画時に平行移動
 function drawMap() {
   const container = document.getElementById('map-container');
-  const W = container.clientWidth;
-  const H = container.clientHeight;
+  const W = container.clientWidth, H = container.clientHeight;
   if (W < 10 || H < 10) return;
 
   const svgEl = document.getElementById('japan-svg');
   d3.select(svgEl).selectAll('*').remove();
   const svg = d3.select(svgEl).attr('viewBox', `0 0 ${W} ${H}`);
 
-  const projection = d3.geoMercator().fitExtent([[8, 8], [W - 8, H - 8]], JAPAN_GEOJSON);
+  // 沖縄(47)を分離して本土だけでフィット範囲を決める
+  const mainland = { type:'FeatureCollection', features: JAPAN_GEOJSON.features.filter(f => f.properties.id !== 47) };
+
+  const projection = d3.geoMercator().fitExtent([[10, 10], [W - 10, H - 50]], mainland);
   const pathGen = d3.geoPath().projection(projection);
 
-  svg.selectAll('path')
-    .data(JAPAN_GEOJSON.features)
-    .enter()
-    .append('path')
+  // 本土
+  svg.append('g').selectAll('path')
+    .data(mainland.features).enter().append('path')
     .attr('d', pathGen)
     .attr('class', d => d.properties.id === NAGANO_ID ? 'pref-nagano' : 'pref-default')
-    .on('mousemove', function(event, d) {
-      tooltip.textContent = d.properties.nam_ja;
-      tooltip.classList.add('show');
-      tooltip.style.left = (event.clientX + 14) + 'px';
-      tooltip.style.top = (event.clientY - 34) + 'px';
-      if (this !== selectedPath) d3.select(this).classed('pref-hovered', true);
-    })
-    .on('mouseleave', function() {
-      tooltip.classList.remove('show');
-      if (this !== selectedPath) d3.select(this).classed('pref-hovered', false);
-    })
-    .on('click', function(event, d) {
-      if (selectedPath) {
-        const prevId = parseInt(d3.select(selectedPath).datum().properties.id);
-        d3.select(selectedPath)
-          .attr('class', prevId === NAGANO_ID ? 'pref-nagano' : 'pref-default');
-      }
-      d3.select(this).attr('class', 'pref-selected');
-      selectedPath = this;
-      analyze(d.properties.id, d.properties.nam_ja, d.properties.nam);
-    });
+    .each(function(d){ d3.select(this).datum(d); })
+    .on('mousemove', onHover).on('mouseleave', onLeave).on('click', onClick);
+
+  // 沖縄を左下にインセット表示
+  const okinawa = JAPAN_GEOJSON.features.find(f => f.properties.id === 47);
+  if (okinawa) {
+    const okProj = d3.geoMercator().fitExtent([[15, H-110],[120, H-15]], okinawa);
+    const okPath = d3.geoPath().projection(okProj);
+    const g = svg.append('g');
+    g.append('rect').attr('x',10).attr('y',H-120).attr('width',118).attr('height',112)
+      .attr('fill','none').attr('stroke','rgba(26,26,24,0.15)').attr('stroke-width',1).attr('rx',6);
+    g.append('path').datum(okinawa).attr('d', okPath)
+      .attr('class','pref-default')
+      .on('mousemove', onHover).on('mouseleave', onLeave).on('click', onClick);
+    g.append('text').attr('x',69).attr('y',H-100).attr('text-anchor','middle')
+      .attr('font-size','10').attr('fill','#A8A89E').attr('font-family',"'Noto Sans JP'").text('沖縄');
+  }
 }
 
-// Draw after fonts/layout settle
+function onHover(event, d) {
+  tooltip.textContent = d.properties.nam_ja;
+  tooltip.classList.add('show');
+  tooltip.style.left = (event.clientX + 14) + 'px';
+  tooltip.style.top = (event.clientY - 34) + 'px';
+  if (this !== selectedPath) d3.select(this).classed('pref-hovered', true);
+}
+function onLeave() {
+  tooltip.classList.remove('show');
+  if (this !== selectedPath) d3.select(this).classed('pref-hovered', false);
+}
+function onClick(event, d) {
+  if (selectedPath) {
+    const prevId = d3.select(selectedPath).datum().properties.id;
+    d3.select(selectedPath).attr('class', prevId === NAGANO_ID ? 'pref-nagano' : 'pref-default');
+  }
+  d3.select(this).attr('class', 'pref-selected');
+  selectedPath = this;
+  analyze(d.properties.id, d.properties.nam_ja, d.properties.nam);
+}
+
 window.addEventListener('load', () => setTimeout(drawMap, 100));
 window.addEventListener('resize', () => setTimeout(drawMap, 50));
 
-function showLoading(name) {
+const SCORE_LABELS = { inbound:'インバウンド', digital:'デジタル化', sustainability:'持続可能性', uniqueness:'独自性' };
+
+function analyze(id, nameJa, nameEn) {
   document.getElementById('empty-state').style.display = 'none';
   const rc = document.getElementById('result-content');
   rc.classList.remove('show'); rc.style.display = 'none';
   const lb = document.getElementById('loading-block');
   lb.classList.add('show');
-  document.getElementById('loading-text').innerHTML = `<strong>${name}</strong>を分析中…<br>少々お待ちください`;
-}
+  document.getElementById('loading-text').innerHTML = `<strong>${nameJa}</strong>を分析中…`;
 
-function hideLoading() {
-  document.getElementById('loading-block').classList.remove('show');
-}
-
-async function analyze(id, nameJa, nameEn) {
-  showLoading(nameJa);
-  const isNagano = id === NAGANO_ID;
-
-  const systemPrompt = `あなたは日本の観光政策の専門家です。必ずJSON形式のみで回答してください。マークダウンのコードブロック（\`\`\`）は使わないでください。JSONオブジェクトのみを出力してください。`;
-
-  const userPrompt = isNagano
-    ? `長野県の観光戦略を自己分析してください。全国平均との比較で強み・弱み・改善点を含めてください。
-以下のJSONスキーマで回答：
-{"scores":{"inbound":70,"digital":55,"sustainability":65,"uniqueness":80},"keyPolicies":["施策例1","施策例2","施策例3","施策例4","施策例5"],"inboundStrategy":"現状のインバウンド戦略の特徴を120字以内で","comparisonWithNagano":[{"icon":"💪","text":"主な強み"},{"icon":"⚠️","text":"主な課題"},{"icon":"🎯","text":"重点改善ポイント"}],"learnings":"今後取り組むべき具体的な戦略を120字以内で"}`
-    : `${nameJa}の観光戦略を分析し、長野県DMO担当者向けに比較インサイトを提供してください。
-以下のJSONスキーマで回答：
-{"scores":{"inbound":70,"digital":55,"sustainability":65,"uniqueness":80},"keyPolicies":["施策例1","施策例2","施策例3","施策例4","施策例5"],"inboundStrategy":"${nameJa}のインバウンド戦略の特徴を120字以内で","comparisonWithNagano":[{"icon":"✅","text":"長野より優れている点"},{"icon":"⚡","text":"長野と競合している点"},{"icon":"💡","text":"長野が参考にできる独自施策"}],"learnings":"長野県が${nameJa}から学べる具体的施策を120字以内で"}`;
-
-  try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1000,
-        system: systemPrompt,
-        messages: [{ role: "user", content: userPrompt }]
-      })
-    });
-
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(`API ${res.status}: ${errText.slice(0, 200)}`);
+  // 事前生成データを使うが、分析している演出として少し待つ
+  const delay = 500 + Math.random() * 600;
+  setTimeout(() => {
+    lb.classList.remove('show');
+    const data = PREF_ANALYSIS[id];
+    if (!data) {
+      rc.innerHTML = `<div style="padding:24px;color:#991B1B">データが見つかりませんでした。</div>`;
+      rc.style.display = 'flex'; rc.classList.add('show');
+      return;
     }
-
-    const data = await res.json();
-    let raw = data.content[0].text.trim();
-    // Strip any markdown fences just in case
-    raw = raw.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/i, '').trim();
-    const result = JSON.parse(raw);
-    renderResult(nameJa, nameEn, result, isNagano);
-  } catch (err) {
-    hideLoading();
-    const rc = document.getElementById('result-content');
-    rc.innerHTML = `<div class="error-block">⚠️ 分析中にエラーが発生しました。もう一度クリックしてお試しください。<br><small style="opacity:0.6;font-size:11px">${err.message}</small></div>`;
-    rc.style.display = 'flex';
-    rc.classList.add('show');
-  }
+    renderResult(nameJa, nameEn, data, id === NAGANO_ID);
+  }, delay);
 }
-
-const SCORE_LABELS = { inbound:'インバウンド', digital:'デジタル化', sustainability:'持続可能性', uniqueness:'独自性' };
 
 function renderResult(nameJa, nameEn, d, isNagano) {
-  hideLoading();
-  const shortEn = nameEn.replace(/ Ken| Fu| To| Do/g,'');
+  const shortEn = nameEn.replace(/ Ken| Fu| To| Do| Ken$/g,'').replace('Hokkai','Hokkaido');
   const sectionTitle = isNagano ? '強み・課題・改善点' : '長野県との比較';
-  const learnTitle   = isNagano ? '今後の重点戦略' : '長野が参考にできる点';
+  const learnTitle = isNagano ? '今後の重点戦略' : '長野が参考にできる点';
 
   const scoreHtml = Object.entries(d.scores).map(([k,v],i) => `
     <div class="score-card">
       <div class="score-card-label">${SCORE_LABELS[k]||k}</div>
-      <div class="score-bar-bg"><div class="score-bar-fill" id="sb-${i}" style="width:0%"></div></div>
+      <div class="score-bar-bg"><div class="score-bar-fill" id="sb-${i}"></div></div>
       <div class="score-val">${v} / 100</div>
     </div>`).join('');
-
-  const tagsHtml = (d.keyPolicies||[]).map((p,i) =>
-    `<span class="tag ${i%3===1?'amber':i%3===2?'blue':''}">${p}</span>`).join('');
-
-  const cmpHtml = (d.comparisonWithNagano||[]).map(c =>
-    `<div class="compare-row"><div class="compare-icon">${c.icon}</div><div class="compare-text">${c.text}</div></div>`).join('');
+  const tagsHtml = d.keyPolicies.map((p,i) => `<span class="tag ${i%3===1?'amber':i%3===2?'blue':''}">${p}</span>`).join('');
+  const cmpHtml = d.comparisonWithNagano.map(c => `<div class="compare-row"><div class="compare-icon">${c.icon}</div><div class="compare-text">${c.text}</div></div>`).join('');
 
   const rc = document.getElementById('result-content');
   rc.innerHTML = `
@@ -315,31 +248,14 @@ function renderResult(nameJa, nameEn, d, isNagano) {
       <div class="result-pref-name">${nameJa}</div>
       <div class="result-pref-sub">${shortEn} · Analysis for Nagano DMO</div>
     </div>
-    <div>
-      <div class="section-label">観光戦略スコア</div>
-      <div class="score-grid">${scoreHtml}</div>
-    </div>
-    <div>
-      <div class="section-label">重点施策</div>
-      <div class="tag-list">${tagsHtml}</div>
-    </div>
-    <div>
-      <div class="section-label">インバウンド戦略</div>
-      <div class="analysis-text">${d.inboundStrategy||''}</div>
-    </div>
-    <div>
-      <div class="section-label">${sectionTitle}</div>
-      ${cmpHtml}
-    </div>
-    <div>
-      <div class="section-label">${learnTitle}</div>
-      <div class="analysis-text">${d.learnings||''}</div>
-    </div>`;
+    <div><div class="section-label">観光戦略スコア</div><div class="score-grid">${scoreHtml}</div></div>
+    <div><div class="section-label">重点施策</div><div class="tag-list">${tagsHtml}</div></div>
+    <div><div class="section-label">インバウンド戦略</div><div class="analysis-text">${d.inboundStrategy}</div></div>
+    <div><div class="section-label">${sectionTitle}</div>${cmpHtml}</div>
+    <div><div class="section-label">${learnTitle}</div><div class="analysis-text">${d.learnings}</div></div>
+    <div class="disclaimer">※ スコアと分析はAIによる参考評価です。施策検討の出発点としてご活用ください。</div>`;
+  rc.style.display = 'flex'; rc.classList.add('show');
 
-  rc.style.display = 'flex';
-  rc.classList.add('show');
-
-  // Animate score bars
   requestAnimationFrame(() => {
     Object.values(d.scores).forEach((v,i) => {
       const el = document.getElementById(`sb-${i}`);
