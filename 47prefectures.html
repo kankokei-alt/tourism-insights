@@ -153,7 +153,7 @@ function drawMap() {
   // 沖縄(47)を分離して本土だけでフィット範囲を決める
   const mainland = { type:'FeatureCollection', features: JAPAN_GEOJSON.features.filter(f => f.properties.id !== 47) };
 
-  const projection = d3.geoMercator().fitExtent([[10, 10], [W - 10, H - 50]], mainland);
+  const projection = d3.geoIdentity().reflectY(true).fitExtent([[10, 10], [W - 10, H - 50]], mainland);
   const pathGen = d3.geoPath().projection(projection);
 
   // 本土
@@ -167,7 +167,7 @@ function drawMap() {
   // 沖縄を左下にインセット表示
   const okinawa = JAPAN_GEOJSON.features.find(f => f.properties.id === 47);
   if (okinawa) {
-    const okProj = d3.geoMercator().fitExtent([[15, H-110],[120, H-15]], okinawa);
+    const okProj = d3.geoIdentity().reflectY(true).fitExtent([[15, H-110],[120, H-15]], okinawa);
     const okPath = d3.geoPath().projection(okProj);
     const g = svg.append('g');
     g.append('rect').attr('x',10).attr('y',H-120).attr('width',118).attr('height',112)
