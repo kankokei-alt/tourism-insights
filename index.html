@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>長野県 観光インサイト</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F2F0EB;
+    --surface: #FFFFFF;
+    --text-primary: #1A1A18;
+    --text-secondary: #6B6B64;
+    --text-muted: #A8A89E;
+    --accent: #1D6A4A;
+    --accent-light: #E8F3EE;
+    --accent-mid: #2E8B5F;
+    --border: rgba(26,26,24,0.1);
+    --border-strong: rgba(26,26,24,0.2);
+    --tag-bg: #EDEAE3;
+  }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    line-height: 1.7;
+  }
+
+  /* NAV */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(242,240,235,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    display: flex; align-items: center; gap: 12px;
+    height: 56px;
+  }
+  .nav-mark {
+    width: 28px; height: 28px;
+    background: var(--accent);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .nav-mark svg { width: 14px; height: 14px; fill: white; }
+  .nav-name { font-size: 13px; font-weight: 500; letter-spacing: 0.02em; }
+  .nav-divider { width: 1px; height: 16px; background: var(--border-strong); }
+  .nav-sub { font-size: 12px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+  .nav-badge {
+    margin-left: auto;
+    font-size: 10px; font-family: 'DM Mono', monospace;
+    padding: 3px 10px; border-radius: 20px;
+    background: var(--accent-light); color: var(--accent);
+    letter-spacing: 0.05em;
+  }
+
+  /* HERO */
+  .hero {
+    padding: 80px 40px 64px;
+    max-width: 960px; margin: 0 auto;
+  }
+  .hero-eyebrow {
+    font-size: 11px; font-family: 'DM Mono', monospace;
+    color: var(--accent); letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .hero-eyebrow::after {
+    content: ''; flex: 1; max-width: 48px;
+    height: 1px; background: var(--accent);
+  }
+  h1 {
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    margin-bottom: 20px;
+  }
+  h1 em {
+    font-style: normal;
+    color: var(--accent);
+  }
+  .hero-desc {
+    font-size: 16px; color: var(--text-secondary);
+    max-width: 520px; line-height: 1.8;
+    margin-bottom: 36px;
+  }
+  .hero-stats {
+    display: flex; gap: 32px;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+  }
+  .stat-item { }
+  .stat-num {
+    font-size: 28px; font-weight: 700;
+    color: var(--accent); line-height: 1;
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 4px;
+  }
+  .stat-label { font-size: 11px; color: var(--text-muted); }
+
+  /* DIVIDER */
+  .section-divider {
+    max-width: 960px; margin: 0 auto;
+    padding: 0 40px;
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 32px;
+  }
+  .section-divider span {
+    font-size: 11px; font-family: 'DM Mono', monospace;
+    color: var(--text-muted); letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+  .section-divider::before, .section-divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  /* GRID */
+  .grid {
+    max-width: 960px; margin: 0 auto;
+    padding: 0 40px 80px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  /* CARD */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px;
+    text-decoration: none;
+    color: inherit;
+    display: flex; flex-direction: column;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent);
+    transform: scaleX(0); transform-origin: left;
+    transition: transform 0.22s ease;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(26,26,24,0.08);
+    border-color: var(--border-strong);
+  }
+  .card:hover::before { transform: scaleX(1); }
+
+  .card-num {
+    font-size: 11px; font-family: 'DM Mono', monospace;
+    color: var(--text-muted); margin-bottom: 16px;
+  }
+  .card-icon {
+    width: 44px; height: 44px; border-radius: 10px;
+    background: var(--accent-light);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 16px; font-size: 20px;
+  }
+  .card-title {
+    font-size: 16px; font-weight: 500;
+    line-height: 1.4; margin-bottom: 10px;
+  }
+  .card-desc {
+    font-size: 13px; color: var(--text-secondary);
+    line-height: 1.7; flex: 1; margin-bottom: 20px;
+  }
+  .card-footer {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag {
+    font-size: 10px; font-family: 'DM Mono', monospace;
+    padding: 3px 9px; border-radius: 20px;
+    background: var(--tag-bg); color: var(--text-secondary);
+    letter-spacing: 0.04em;
+  }
+  .card-arrow {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 1px solid var(--border-strong);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: var(--text-muted);
+    transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
+  }
+  .card:hover .card-arrow {
+    background: var(--accent); color: white; border-color: var(--accent);
+  }
+
+  /* COMING SOON */
+  .card.soon { opacity: 0.55; pointer-events: none; }
+  .card.soon::before { display: none; }
+  .soon-badge {
+    font-size: 10px; font-family: 'DM Mono', monospace;
+    padding: 3px 9px; border-radius: 20px;
+    background: #F0EDE6; color: var(--text-muted);
+  }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 24px 40px;
+    max-width: 960px; margin: 0 auto;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .footer-left { font-size: 12px; color: var(--text-muted); }
+  .footer-right { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--text-muted); }
+
+  @media (max-width: 600px) {
+    nav { padding: 0 20px; }
+    .hero { padding: 48px 20px 40px; }
+    .hero-stats { gap: 20px; }
+    .grid { padding: 0 20px 60px; }
+    .section-divider { padding: 0 20px; }
+    footer { padding: 20px; flex-direction: column; gap: 8px; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-mark">
+    <svg viewBox="0 0 16 16"><path d="M8 1L10.5 6H14L11 9.5L12.5 14L8 11L3.5 14L5 9.5L2 6H5.5L8 1Z"/></svg>
+  </div>
+  <span class="nav-name">長野県観光インサイト</span>
+  <div class="nav-divider"></div>
+  <span class="nav-sub">Nagano DMO Research</span>
+  <span class="nav-badge">BETA</span>
+</nav>
+
+<section class="hero">
+  <div class="hero-eyebrow">Tourism Intelligence Portal</div>
+  <h1>データで読む、<br><em>長野県の観光</em></h1>
+  <p class="hero-desc">
+    オープンデータとAIを活用して、長野県の観光産業の現状と課題を可視化するリサーチポータルです。観光事業者・DMO職員向けのインサイトを提供します。
+  </p>
+  <div class="hero-stats">
+    <div class="stat-item">
+      <div class="stat-num">7</div>
+      <div class="stat-label">分析プロジェクト</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">47</div>
+      <div class="stat-label">都道府県比較</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">Free</div>
+      <div class="stat-label">すべて無料データ</div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"><span>ANALYSES</span></div>
+
+<div class="grid">
+
+  <a class="card" href="47prefectures.html">
+    <div class="card-num">01</div>
+    <div class="card-icon">🗾</div>
+    <div class="card-title">47都道府県 観光計画比較</div>
+    <div class="card-desc">全国の観光計画をAIで一斉分析。KPI・重点施策・予算規模を比較し、長野県の強みと空白を浮き彫りにします。</div>
+    <div class="card-footer">
+      <div class="card-tags"><span class="tag">LLM</span><span class="tag">政策分析</span></div>
+      <div class="card-arrow">→</div>
+    </div>
+  </a>
+
+  <a class="card" href="wikipedia-gap.html">
+    <div class="card-num">02</div>
+    <div class="card-icon">🌐</div>
+    <div class="card-title">Wikipedia 多言語ギャップ分析</div>
+    <div class="card-desc">英・中・仏・韓語版Wikipediaで長野の観光地の情報充実度を調査。「外国人に存在しない観光地」を特定します。</div>
+    <div class="card-footer">
+      <div class="card-tags"><span class="tag">Wikipedia API</span><span class="tag">インバウンド</span></div>
+      <div class="card-arrow">→</div>
+    </div>
+  </a>
+
+  <a class="card" href="global-awareness.html">
+    <div class="card-num">03</div>
+    <div class="card-icon">📡</div>
+    <div class="card-title">海外認知度レーダー</div>
+    <div class="card-desc">Google TrendsとWikipediaページビューで「Hakuba」「Matsumoto」などの海外検索動向を国別・時系列で分析します。</div>
+    <div class="card-footer">
+      <div class="card-tags"><span class="tag">Pytrends</span><span class="tag">トレンド分析</span></div>
+      <div class="card-arrow">→</div>
+    </div>
+  </a>
+
+  <a class="card" href="reddit-insights.html">
+    <div class="card-num">04</div>
+    <div class="card-icon">💬</div>
+    <div class="card-title">Reddit 未回答質問分析</div>
+    <div class="card-desc">海外旅行フォーラムで長野について質問されているのに回答がない投稿を収集。コンテンツ戦略の優先順位リストを生成します。</div>
+    <div class="card-footer">
+      <div class="card-tags"><span class="tag">Reddit API</span><span class="tag">コンテンツ戦略</span></div>
+      <div class="card-arrow">→</div>
+    </div>
+  </a>
+
+  <div class="card soon">
+    <div class="card-num">05</div>
+    <div class="card-icon">🚌</div>
+    <div class="card-title">最終バス問題マップ</div>
+    <div class="card-desc">GTFSオープンデータと観光施設の営業時間を突合し、公共交通だけで来た旅行者が「詰むポイント」を可視化します。</div>
+    <div class="card-footer">
+      <div class="card-tags"><span class="tag">GTFS</span><span class="tag">二次交通</span></div>
+      <span class="soon-badge">準備中</span>
+    </div>
+  </div>
+
+  <div class="card soon">
+    <div class="card-num">06</div>
+    <div class="card-icon">🏨</div>
+    <div class="card-title">宿泊価格ウォッチャー</div>
+    <div class="card-desc">楽天トラベル・じゃらんAPIで県内施設の価格と他県を比較。ADR分析で機会損失を特定します。</div>
+    <div class="card-footer">
+      <div class="card-tags"><span class="tag">楽天API</span><span class="tag">価格分析</span></div>
+      <span class="soon-badge">準備中</span>
+    </div>
+  </div>
+
+  <div class="card soon">
+    <div class="card-num">07</div>
+    <div class="card-icon">🗺️</div>
+    <div class="card-title">OSM地図空白地帯検出</div>
+    <div class="card-desc">海外旅行者が使う地図アプリ（OpenStreetMapベース）で県内観光施設の登録率を分析。「地図に存在しない店」を特定します。</div>
+    <div class="card-footer">
+      <div class="card-tags"><span class="tag">Overpass API</span><span class="tag">地図分析</span></div>
+      <span class="soon-badge">準備中</span>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="footer-left">長野県DMO 観光インサイトポータル — オープンデータ活用リサーチ</div>
+  <div class="footer-right">Built with open data</div>
+</footer>
+
+</body>
+</html>
