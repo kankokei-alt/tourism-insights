@@ -131,6 +131,18 @@
   .modal-btn:hover { background: #185a3e; }
 
 
+
+  .season-comment { font-size: 13px; line-height: 1.85; color: var(--text-secondary); background: #F0F6F2; border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 12px 14px; margin-bottom: 12px; }
+  .season-chart { display: flex; align-items: flex-end; gap: 3px; height: 70px; margin-bottom: 8px; }
+  .season-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 3px; }
+  .season-bar { width: 100%; background: var(--accent-light); border-radius: 2px 2px 0 0; min-height: 2px; transition: height 0.6s ease; position: relative; }
+  .season-bar.peak { background: var(--accent); }
+  .season-bar.low { background: #D88B6A; }
+  .season-month-label { font-size: 9px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+  .season-legend { display: flex; gap: 14px; font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+  .season-legend span { display: flex; align-items: center; gap: 4px; }
+  .season-legend i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+
   .realdata-card { background: var(--accent); color: white; border-radius: 12px; padding: 16px 18px; margin-bottom: 4px; }
   .realdata-label { font-size: 11px; opacity: 0.85; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
   .realdata-badge { font-size: 9px; background: rgba(255,255,255,0.25); padding: 2px 7px; border-radius: 10px; letter-spacing: 0.03em; }
@@ -163,6 +175,7 @@
       <div class="modal-section-title"><span class="ic">②</span>見られる分析</div>
       <ul class="modal-list">
         <li>年間観光来訪者数の実データと全国順位（日本観光振興協会オープンデータ）</li>
+        <li>月別の来訪者数から見た季節パターン（最繁忙期・最閑散期）</li>
         <li>4つの観点（インバウンド／デジタル化／持続可能性／独自性）によるAIスコア評価</li>
         <li>各県の重点施策と代表的な観光資源</li>
         <li>長野県と比べた強み・競合・参考にできる独自施策</li>
@@ -290,6 +303,24 @@ function onClick(event, d) {
 window.addEventListener('load', () => setTimeout(drawMap, 100));
 window.addEventListener('resize', () => setTimeout(drawMap, 50));
 
+
+function renderSeasonBars(seasonality) {
+  if (!seasonality.monthly) return '';
+  const monthly = seasonality.monthly;
+  const max = Math.max(...monthly);
+  const peakM = seasonality.peakMonth;
+  const lowM = seasonality.lowMonth;
+  return monthly.map((val, i) => {
+    const m = i + 1;
+    const h = Math.round((val / max) * 100);
+    const cls = m === peakM ? 'peak' : (m === lowM ? 'low' : '');
+    return `<div class="season-bar-col">
+      <div class="season-bar ${cls}" style="height:${h}%"></div>
+      <div class="season-month-label">${m}</div>
+    </div>`;
+  }).join('');
+}
+
 const SCORE_LABELS = { inbound:'インバウンド', digital:'デジタル化', sustainability:'持続可能性', uniqueness:'独自性' };
 
 function analyze(id, nameJa, nameEn) {
@@ -341,6 +372,16 @@ function renderResult(nameJa, nameEn, d, isNagano) {
         <div class="realdata-sub">全国 ${d.realData.rank}位 / 47都道府県</div>
       </div>
       <div class="realdata-source">出典：日本観光振興協会「デジタル観光統計オープンデータ」2025年 都道府県観光来訪者数（12ヶ月合計）<br><a href="https://www.nihon-kankou.or.jp/home/jigyou/research/d-toukei/" target="_blank">nihon-kankou.or.jp</a></div>
+    </div>` : ''}
+    ${d.seasonality ? `<div>
+      <div class="section-label">来訪の季節パターン（実データ）</div>
+      <div class="season-comment">${d.seasonality.comment}</div>
+      <div class="season-chart">${renderSeasonBars(d.seasonality)}</div>
+      <div class="season-legend">
+        <span><i style="background:var(--accent)"></i>最繁忙月</span>
+        <span><i style="background:#D88B6A"></i>最閑散月</span>
+        <span><i style="background:var(--accent-light)"></i>その他</span>
+      </div>
     </div>` : ''}
     <div><div class="section-label">観光戦略スコア（AI推定）</div><div class="score-grid">${scoreHtml}</div></div>
     <div><div class="section-label">重点施策</div><div class="tag-list">${tagsHtml}</div></div>
