@@ -285,20 +285,31 @@ const W = { chars: 0.55, sections: 0.30, images: 0.15 };
 
 // ---- Wikipedia API ----
 // origin=* でCORS回避。1記事のセクション数・画像数・本文長を取得。
+function sleep(ms){ return new Promise(res=>setTimeout(res,ms)); }
+async function fetchJSON(url, tries=3) {
+  for (let i=0; i<tries; i++) {
+    try {
+      const ctrl = new AbortController();
+      const to = setTimeout(()=>ctrl.abort(), 12000);
+      const r = await fetch(url, { signal: ctrl.signal });
+      clearTimeout(to);
+      if (!r.ok) throw new Error("HTTP "+r.status);
+      return await r.json();
+    } catch (e) {
+      if (i === tries-1) throw e;
+      await sleep(400 * (i+1)); // バックオフ
+    }
+  }
+}
 async function fetchArticle(lang, title) {
   const base = `https://${lang}.wikipedia.org/w/api.php`;
-  // langlinks 経由ではなく、まず日本語タイトルからその言語版タイトルを引く必要がある。
-  // ja以外は ja記事の言語間リンクで解決する方式を呼び出し側で行う。ここでは与えられたtitleで直接取得。
   const params = new URLSearchParams({
     action: "query", format: "json", origin: "*",
-    titles: title, prop: "extracts|images|sections",
-    explaintext: "1", exsectionformat: "plain"
+    titles: title, prop: "extracts|images",
+    explaintext: "1", redirects: "1"
   });
-  // sections は prop=query では取れないので parse を併用
-  const url = `${base}?${params.toString()}`;
   try {
-    const r = await fetch(url);
-    const j = await r.json();
+    const j = await fetchJSON(`${base}?${params.toString()}`);
     const pages = j?.query?.pages || {};
     const page = Object.values(pages)[0];
     if (!page || page.missing !== undefined) return { exists: false, chars: 0, images: 0, sections: 0 };
@@ -315,8 +326,7 @@ async function fetchSections(lang, title) {
   const base = `https://${lang}.wikipedia.org/w/api.php`;
   const params = new URLSearchParams({ action: "parse", format: "json", origin: "*", page: title, prop: "sections" });
   try {
-    const r = await fetch(`${base}?${params.toString()}`);
-    const j = await r.json();
+    const j = await fetchJSON(`${base}?${params.toString()}`);
     return (j?.parse?.sections || []).length;
   } catch (e) { return 0; }
 }
@@ -327,8 +337,7 @@ async function resolveLangTitles(jaTitle) {
   const params = new URLSearchParams({ action: "query", format: "json", origin: "*", titles: jaTitle, prop: "langlinks", lllimit: "500" });
   const map = { ja: jaTitle };
   try {
-    const r = await fetch(`${base}?${params.toString()}`);
-    const j = await r.json();
+    const j = await fetchJSON(`${base}?${params.toString()}`);
     const page = Object.values(j?.query?.pages || {})[0];
     (page?.langlinks || []).forEach(ll => { map[ll.lang] = ll["*"]; });
   } catch (e) {}
@@ -350,10 +359,25 @@ async function fetchSpot(jaTitle) {
 }
 
 // 日本語記事が存在するスポットだけを返す（無いものは分析対象外）
+// ja.exists === true: 有効 / === false: 本当に記事なし / === null: 取得失敗
 function validSpots(prefKey, store){
-  return PREFS[prefKey].spots.filter(s => store[prefKey] && store[prefKey][s] && store[prefKey][s].ja && store[prefKey][s].ja.exists);
+  return PREFS[prefKey].spots.filter(s => {
+    const d = store[prefKey] && store[prefKey][s];
+    return d && d.ja && d.ja.exists === true;
+  });
 }
-// 除外件数を控えておく
+function failedSpots(prefKey, store){
+  return PREFS[prefKey].spots.filter(s => {
+    const d = store[prefKey] && store[prefKey][s];
+    return d && d.ja && d.ja.exists === null;
+  });
+}
+function missingSpots(prefKey, store){
+  return PREFS[prefKey].spots.filter(s => {
+    const d = store[prefKey] && store[prefKey][s];
+    return d && d.ja && d.ja.exists === false;
+  });
+}
 let EXCLUDED = {};
 
 // ---- スコア計算 ----
@@ -457,25 +481,27 @@ function renderMatrix(store) {
 }
 
 function renderAll(store) {
-  // 日本語記事なしの除外件数を集計
-  EXCLUDED = {};
-  let totalEx = 0;
+  // 記事なし(missing)と取得失敗(failed)を分けて集計
+  let totalMissing = 0, totalFailed = 0;
+  const missDetail = [], failDetail = [];
   Object.keys(PREFS).forEach(key => {
-    const all = PREFS[key].spots.length;
-    const valid = validSpots(key, store).length;
-    EXCLUDED[key] = all - valid;
-    totalEx += (all - valid);
+    const miss = missingSpots(key, store).length;
+    const fail = failedSpots(key, store).length;
+    totalMissing += miss; totalFailed += fail;
+    if (miss > 0) missDetail.push(`${PREFS[key].label} ${miss}件`);
+    if (fail > 0) failDetail.push(`${PREFS[key].label} ${fail}件`);
   });
   const exEl = document.getElementById("excluded-note");
   if (exEl) {
-    if (totalEx > 0) {
-      const detail = Object.entries(EXCLUDED).filter(([k,v])=>v>0)
-        .map(([k,v])=>`${PREFS[k].label} ${v}件`).join(" / ");
-      exEl.style.display = "block";
-      exEl.innerHTML = `<b>分析対象から除外：</b>日本語Wikipedia記事が確認できなかった ${totalEx} 地点を集計から除外しました（${detail}）。記事タイトルの相違の可能性もあります。`;
-    } else {
-      exEl.style.display = "none";
+    let msgs = [];
+    if (totalFailed > 0) {
+      msgs.push(`<b>取得失敗 ${totalFailed} 地点：</b>通信エラーで取得できませんでした（${failDetail.join(" / ")}）。もう一度「再調査」を押すと取得できる場合があります。`);
     }
+    if (totalMissing > 0) {
+      msgs.push(`<b>日本語記事なし ${totalMissing} 地点を除外：</b>${missDetail.join(" / ")}（記事タイトルの相違の可能性あり）。`);
+    }
+    if (msgs.length) { exEl.style.display = "block"; exEl.innerHTML = msgs.join("<br>"); }
+    else { exEl.style.display = "none"; }
   }
   renderPrefRank(store);
   renderWorst(store);
@@ -530,7 +556,7 @@ async function runLiveScan() {
   updateLoading(0, total);
 
   // 順次（レート制限に配慮しつつ、県内は少し並列）
-  const CONCURRENCY = 4;
+  const CONCURRENCY = 2;
   let cursor = 0;
   async function worker() {
     while (cursor < allTasks.length) {
@@ -539,6 +565,7 @@ async function runLiveScan() {
       store[key][s] = await fetchSpot(s);
       done++;
       updateLoading(done, total);
+      await sleep(120); // レート制限への配慮
     }
   }
   await Promise.all(Array.from({length: CONCURRENCY}, worker));
