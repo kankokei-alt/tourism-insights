@@ -144,7 +144,7 @@
     <div class="hero-eyebrow">Multilingual Wikipedia Gap Analysis</div>
     <h1>外国人が調べても、<br><em>そこに記事はあるか。</em></h1>
     <p class="hero-desc">
-      長野・京都・広島・石川の主要観光地50か所ずつを、日本語を基準に英語・中国語・タイ語・フランス語の各Wikipediaで調査。記事の有無・セクション数・画像数・補正文字数から「充実度スコア」を算出し、インバウンド情報整備の空白を可視化します。
+      長野・京都・広島・石川の主要観光地50か所ずつを、日本語を基準に英語・中国語・タイ語・フランス語の各Wikipediaで調査。記事の有無・本文量・画像数から「充実度スコア」を算出し、インバウンド情報整備の空白を可視化します。
     </p>
   </section>
 
@@ -165,20 +165,11 @@
 
   <section class="section" id="sec-pref">
     <div class="section-head">
-      <div class="section-label">切り口 1 — マクロ</div>
+      <div class="section-label">県別比較</div>
       <div class="section-title">県別ギャップ比較</div>
       <div class="section-sub">日本語記事を100%としたとき、各言語版がどれだけ充実しているか（50地点の平均充実度）。長野が全国でどの位置にいるかを見ます。</div>
     </div>
     <div class="pref-rank" id="prefRank"></div>
-  </section>
-
-  <section class="section" id="sec-worst">
-    <div class="section-head">
-      <div class="section-label">切り口 2 — ミクロ</div>
-      <div class="section-title">長野・対策優先ワーストランキング</div>
-      <div class="section-sub">長野県内50地点のうち、対象4言語での情報が最も乏しい順。ここがインバウンド情報整備の優先候補です。</div>
-    </div>
-    <div class="worst-list" id="worstList"></div>
   </section>
 
   <section class="section" id="sec-matrix">
@@ -195,9 +186,9 @@
   <section class="section">
     <div class="method">
       <h3>分析手法</h3>
-      <p>各観光地について、5言語のWikipedia APIから <code>セクション数</code>・<code>画像数</code>・<code>文字数</code> を取得します。記事が存在しない場合はスコア0。</p>
-      <p>言語によって1情報あたりの文字数が異なるため（表意文字の日本語・中国語は少ない文字数で多くの情報を表現）、文字数は言語係数で補正します。最終的な<code>充実度スコア</code>は、補正文字数・セクション数・画像数を合成し、その地点の日本語記事を100%とした相対値で表します。</p>
-      <p>充実度スコアは「英語版は文字数こそ多いが、セクション2つ・画像1枚＝実は内容が薄い」といった見かけ倒しを検出できるよう設計しています。</p>
+      <p>各観光地について、5言語のWikipedia APIから <code>本文の文字数</code>・<code>画像数</code> を取得します。記事が存在しない場合はスコア0。</p>
+      <p>言語によって1情報あたりの文字数が異なるため（表意文字の日本語・中国語は少ない文字数で多くの情報を表現）、文字数は言語係数で補正します。最終的な<code>充実度スコア</code>は、補正文字数と画像数を合成し、その地点の日本語記事を100%とした相対値で表します。</p>
+      <p>画像数を併せて見ることで「文字数は多いが画像が乏しい」といった偏りも反映されます。旅行者にとって写真は文字と同等に重要な情報だからです。</p>
     </div>
   </section>
 
@@ -281,23 +272,23 @@ const LANGS = [
 const CHAR_COEF = { ja: 1.0, zh: 1.05, en: 0.45, fr: 0.42, th: 0.5 };
 
 // 充実度スコアの合成重み（補正文字数 / セクション / 画像）
-const W = { chars: 0.55, sections: 0.30, images: 0.15 };
+const W = { chars: 0.65, sections: 0.0, images: 0.35 };
 
 // ---- Wikipedia API ----
 // origin=* でCORS回避。1記事のセクション数・画像数・本文長を取得。
 function sleep(ms){ return new Promise(res=>setTimeout(res,ms)); }
-async function fetchJSON(url, tries=3) {
+async function fetchJSON(url, tries=4) {
   for (let i=0; i<tries; i++) {
     try {
       const ctrl = new AbortController();
-      const to = setTimeout(()=>ctrl.abort(), 12000);
+      const to = setTimeout(()=>ctrl.abort(), 15000);
       const r = await fetch(url, { signal: ctrl.signal });
       clearTimeout(to);
       if (!r.ok) throw new Error("HTTP "+r.status);
       return await r.json();
     } catch (e) {
       if (i === tries-1) throw e;
-      await sleep(400 * (i+1)); // バックオフ
+      await sleep(600 * (i+1)); // バックオフ
     }
   }
 }
@@ -321,16 +312,6 @@ async function fetchArticle(lang, title) {
   }
 }
 
-// セクション数は parse API で取得
-async function fetchSections(lang, title) {
-  const base = `https://${lang}.wikipedia.org/w/api.php`;
-  const params = new URLSearchParams({ action: "parse", format: "json", origin: "*", page: title, prop: "sections" });
-  try {
-    const j = await fetchJSON(`${base}?${params.toString()}`);
-    return (j?.parse?.sections || []).length;
-  } catch (e) { return 0; }
-}
-
 // ja記事 → 各言語版タイトルを言語間リンクで解決
 async function resolveLangTitles(jaTitle) {
   const base = `https://ja.wikipedia.org/w/api.php`;
@@ -352,7 +333,6 @@ async function fetchSpot(jaTitle) {
     const t = titles[L.code];
     if (!t) { result[L.code] = { exists: false, chars: 0, images: 0, sections: 0 }; continue; }
     const art = await fetchArticle(L.code, t);
-    if (art.exists) art.sections = await fetchSections(L.code, t);
     result[L.code] = art;
   }
   return result;
@@ -436,31 +416,6 @@ function renderPrefRank(store) {
   document.getElementById("prefRank").innerHTML = html;
 }
 
-function renderWorst(store) {
-  const vspots = validSpots("nagano", store);
-  const scored = vspots.map(s => {
-    const targets = LANGS.filter(l=>l.role==="target");
-    const scores = targets.map(L => ({ code:L.code, label:L.label, pct: relScore(store.nagano[s], L.code), exists: store.nagano[s][L.code]?.exists }));
-    const avg = Math.round(scores.reduce((a,b)=>a+b.pct,0)/scores.length);
-    const missing = scores.filter(x=>!x.exists);
-    const thin = scores.filter(x=>x.exists && x.pct < 30);
-    return { spot:s, avg, missing, thin };
-  }).sort((a,b)=> a.avg - b.avg).slice(0, 15);
-
-  const html = scored.map((r,i) => {
-    const flags = [
-      ...r.missing.map(m=>`<span class="flag miss">${m.label} なし</span>`),
-      ...r.thin.map(t=>`<span class="flag thin">${t.label} 希薄</span>`)
-    ].slice(0,5).join("");
-    return `<div class="worst-row">
-      <span class="worst-rank">${i+1}</span>
-      <span class="worst-name">${r.spot}</span>
-      <span class="worst-flags">${flags || '<span class="flag thin">要確認</span>'}</span>
-    </div>`;
-  }).join("");
-  document.getElementById("worstList").innerHTML = html;
-}
-
 function renderMatrix(store) {
   const vspots = validSpots("nagano", store);
   const head = `<thead><tr><th class="spot" style="text-align:left">観光地</th>${LANGS.map(L=>`<th>${L.label}${L.role==='base'?'<br><span style="font-weight:400;color:var(--text-muted)">基準</span>':''}</th>`).join("")}</tr></thead>`;
@@ -504,7 +459,6 @@ function renderAll(store) {
     else { exEl.style.display = "none"; }
   }
   renderPrefRank(store);
-  renderWorst(store);
   renderMatrix(store);
 }
 
