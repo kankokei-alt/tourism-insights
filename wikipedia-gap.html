@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wikipedia 多言語ギャップ分析 — 長野県観光インサイト</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #F2F0EB; --surface: #FFFFFF;
+    --text-primary: #1A1A18; --text-secondary: #6B6B64; --text-muted: #A8A89E;
+    --accent: #1D6A4A; --accent-light: #E8F3EE; --accent-mid: #2E8B5F;
+    --border: rgba(26,26,24,0.1); --border-strong: rgba(26,26,24,0.2);
+    --tag-bg: #EDEAE3;
+    --warn: #B45309; --warn-bg: #FEF3E8; --danger: #991B1B; --danger-bg: #FEF2F2;
+    --c-nagano: #1D6A4A; --c-kyoto: #9B4DA0; --c-hiroshima: #C9601E; --c-ishikawa: #2E6FA8;
+  }
+  body { font-family: 'Noto Sans JP', sans-serif; background: var(--bg); color: var(--text-primary); min-height: 100vh; line-height: 1.7; }
+
+  nav { position: sticky; top: 0; z-index: 100; background: rgba(242,240,235,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 0 40px; display: flex; align-items: center; gap: 12px; height: 56px; }
+  .nav-back { font-size: 12px; color: var(--text-secondary); text-decoration: none; font-weight: 500; }
+  .nav-back:hover { color: var(--accent); }
+  .nav-divider { width: 1px; height: 16px; background: var(--border-strong); }
+  .nav-title { font-size: 13px; font-weight: 500; }
+  .nav-badge { margin-left: auto; font-size: 10px; font-family: 'DM Mono', monospace; padding: 3px 10px; border-radius: 20px; background: var(--accent-light); color: var(--accent); letter-spacing: 0.05em; }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 40px; }
+
+  /* HERO */
+  .hero { padding: 56px 0 36px; }
+  .hero-eyebrow { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 18px; }
+  .hero h1 { font-size: clamp(28px, 4.5vw, 44px); font-weight: 300; line-height: 1.25; letter-spacing: -0.02em; margin-bottom: 18px; }
+  .hero h1 em { font-style: normal; font-weight: 700; color: var(--accent); }
+  .hero-desc { font-size: 15px; color: var(--text-secondary); max-width: 620px; line-height: 1.8; }
+
+  /* CONTROL BAR */
+  .controlbar { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 18px 22px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 14px; }
+  .control-meta { font-size: 12px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+  .control-meta strong { color: var(--text-secondary); font-weight: 500; }
+  .rescan-btn { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; font-family: 'Noto Sans JP', sans-serif; font-size: 13px; font-weight: 500; color: #fff; background: var(--accent); border: none; border-radius: 8px; padding: 10px 18px; cursor: pointer; transition: background 0.2s, transform 0.1s; }
+  .rescan-btn:hover { background: var(--accent-mid); }
+  .rescan-btn:active { transform: scale(0.97); }
+  .rescan-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .rescan-btn svg { width: 14px; height: 14px; fill: currentColor; }
+
+  .note-strip { font-size: 12px; color: var(--text-secondary); background: var(--accent-light); border-radius: 8px; padding: 10px 14px; margin-bottom: 28px; line-height: 1.6; }
+  .note-strip b { color: var(--accent); font-weight: 500; }
+
+  /* SECTION */
+  .section { margin-bottom: 44px; }
+  .section-head { margin-bottom: 18px; }
+  .section-label { font-size: 10px; font-family: 'DM Mono', monospace; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--accent-light); }
+  .section-title { font-size: 20px; font-weight: 500; letter-spacing: -0.01em; }
+  .section-sub { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+  /* PREF RANKING */
+  .pref-rank { display: flex; flex-direction: column; gap: 12px; }
+  .pref-row { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; }
+  .pref-row-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .pref-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .pref-name { font-size: 15px; font-weight: 500; }
+  .pref-score { margin-left: auto; font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text-secondary); }
+  .pref-score b { font-size: 20px; color: var(--text-primary); font-weight: 500; }
+  .lang-bars { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  .lang-bar-item {}
+  .lang-bar-label { font-size: 10px; color: var(--text-muted); margin-bottom: 5px; font-family: 'DM Mono', monospace; display: flex; justify-content: space-between; }
+  .lang-bar-label span:last-child { color: var(--text-secondary); }
+  .lang-bar-bg { height: 6px; background: #E6E3DC; border-radius: 3px; overflow: hidden; }
+  .lang-bar-fill { height: 100%; border-radius: 3px; transition: width 0.9s cubic-bezier(.2,.8,.2,1); }
+
+  /* MATRIX */
+  .matrix-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+  table.matrix { border-collapse: collapse; width: 100%; font-size: 13px; min-width: 640px; }
+  table.matrix th, table.matrix td { padding: 9px 12px; text-align: center; border-bottom: 1px solid var(--border); }
+  table.matrix thead th { position: sticky; top: 0; background: var(--surface); font-weight: 500; font-size: 11px; color: var(--text-secondary); z-index: 2; }
+  table.matrix tbody td.spot { text-align: left; font-weight: 500; white-space: nowrap; position: sticky; left: 0; background: var(--surface); z-index: 1; }
+  .cell { display: inline-flex; align-items: center; justify-content: center; min-width: 38px; height: 24px; border-radius: 6px; font-family: 'DM Mono', monospace; font-size: 11px; }
+  .cell.none { background: var(--danger-bg); color: var(--danger); }
+  .cell.thin { background: var(--warn-bg); color: var(--warn); }
+  .cell.ok   { background: var(--accent-light); color: var(--accent); }
+  .cell.base { background: #EDEAE3; color: var(--text-secondary); }
+
+  /* WORST LIST */
+  .worst-list { display: flex; flex-direction: column; gap: 8px; }
+  .worst-row { display: flex; align-items: center; gap: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 13px 18px; }
+  .worst-rank { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text-muted); width: 28px; flex-shrink: 0; }
+  .worst-name { font-size: 14px; font-weight: 500; }
+  .worst-flags { margin-left: auto; display: flex; gap: 5px; }
+  .flag { font-size: 9px; font-family: 'DM Mono', monospace; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.03em; }
+  .flag.miss { background: var(--danger-bg); color: var(--danger); }
+  .flag.thin { background: var(--warn-bg); color: var(--warn); }
+
+  /* METHOD */
+  .method { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px 28px; }
+  .method h3 { font-size: 14px; font-weight: 500; margin-bottom: 12px; }
+  .method p { font-size: 13px; color: var(--text-secondary); margin-bottom: 10px; line-height: 1.8; }
+  .method code { font-family: 'DM Mono', monospace; font-size: 12px; background: var(--bg); padding: 1px 6px; border-radius: 4px; color: var(--accent); }
+
+  footer { border-top: 1px solid var(--border); padding: 24px 0 40px; margin-top: 20px; }
+  .footer-text { font-size: 12px; color: var(--text-muted); }
+
+  /* ===== LOADING OVERLAY (長野モチーフ) ===== */
+  .loading-overlay { position: fixed; inset: 0; z-index: 1000; background: rgba(242,240,235,0.97); display: none; flex-direction: column; align-items: center; justify-content: center; gap: 0; }
+  .loading-overlay.active { display: flex; }
+  .scene { position: relative; width: 280px; height: 160px; }
+  /* 北アルプスの山 */
+  .mtn { position: absolute; bottom: 38px; left: 0; right: 0; height: 80px; }
+  .mtn svg { width: 100%; height: 100%; }
+  /* 温泉の湯気 */
+  .steam { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: rgba(29,106,74,0.25); bottom: 44px; animation: rise 2.4s ease-in infinite; }
+  @keyframes rise { 0% { transform: translateY(0) scale(0.6); opacity: 0; } 25% { opacity: 0.7; } 100% { transform: translateY(-70px) scale(1.5); opacity: 0; } }
+  /* 雷鳥（てくてく歩く） */
+  .bird { position: absolute; bottom: 38px; font-size: 26px; animation: walk 3s linear infinite; }
+  @keyframes walk { 0% { left: -30px; transform: scaleX(1); } 49% { left: 280px; transform: scaleX(1); } 50% { left: 280px; transform: scaleX(-1); } 99% { left: -30px; transform: scaleX(-1); } 100% { left: -30px; transform: scaleX(1); } }
+  .bird-bob { display: inline-block; animation: bob 0.4s ease-in-out infinite; }
+  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+  .loading-text { margin-top: 28px; font-size: 15px; font-weight: 500; color: var(--accent); font-family: 'Noto Sans JP'; text-align: center; min-height: 24px; }
+  .loading-prog { margin-top: 10px; font-size: 12px; font-family: 'DM Mono', monospace; color: var(--text-muted); }
+  .loading-track { margin-top: 14px; width: 240px; height: 4px; background: #E6E3DC; border-radius: 2px; overflow: hidden; }
+  .loading-fill { height: 100%; width: 0%; background: var(--accent); border-radius: 2px; transition: width 0.3s ease; }
+
+  @media (max-width: 720px) {
+    nav, .wrap { padding-left: 20px; padding-right: 20px; }
+    .lang-bars { grid-template-columns: repeat(2, 1fr); }
+    .hero { padding: 40px 0 28px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-back" href="index.html">← 一覧へ戻る</a>
+  <div class="nav-divider"></div>
+  <span class="nav-title">Wikipedia 多言語ギャップ分析</span>
+  <span class="nav-badge">LIVE調査</span>
+</nav>
+
+<div class="wrap">
+
+  <section class="hero">
+    <div class="hero-eyebrow">Multilingual Wikipedia Gap Analysis</div>
+    <h1>外国人が調べても、<br><em>そこに記事はあるか。</em></h1>
+    <p class="hero-desc">
+      長野・京都・広島・石川の主要観光地50か所ずつを、日本語を基準に英語・中国語・タイ語・フランス語の各Wikipediaで調査。記事の有無・セクション数・画像数・補正文字数から「充実度スコア」を算出し、インバウンド情報整備の空白を可視化します。
+    </p>
+  </section>
+
+  <div class="controlbar">
+    <div class="control-meta">データ取得: <strong id="meta-time">読み込み中…</strong></div>
+    <div class="control-meta">対象: <strong>4県 × 50地点 × 5言語</strong></div>
+    <button class="rescan-btn" id="rescanBtn">
+      <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4z"/></svg>
+      最新データで再調査
+    </button>
+  </div>
+
+  <div class="note-strip">
+    <b>中国語について：</b>中国語版Wikipediaは1つのみで、簡体字（本土・シンガポール）と繁体字（台湾・香港）は同一記事を自動変換して表示しています。本分析では中国語1言語として扱います。中国本土ではWikipediaの閲覧が制限されていますが、台湾・香港・海外華僑の利用を想定し対象に含めています。
+  </div>
+
+  <section class="section" id="sec-pref">
+    <div class="section-head">
+      <div class="section-label">切り口 1 — マクロ</div>
+      <div class="section-title">県別ギャップ比較</div>
+      <div class="section-sub">日本語記事を100%としたとき、各言語版がどれだけ充実しているか（50地点の平均充実度）。長野が全国でどの位置にいるかを見ます。</div>
+    </div>
+    <div class="pref-rank" id="prefRank"></div>
+  </section>
+
+  <section class="section" id="sec-worst">
+    <div class="section-head">
+      <div class="section-label">切り口 2 — ミクロ</div>
+      <div class="section-title">長野・対策優先ワーストランキング</div>
+      <div class="section-sub">長野県内50地点のうち、対象4言語での情報が最も乏しい順。ここがインバウンド情報整備の優先候補です。</div>
+    </div>
+    <div class="worst-list" id="worstList"></div>
+  </section>
+
+  <section class="section" id="sec-matrix">
+    <div class="section-head">
+      <div class="section-label">詳細 — 長野全50地点</div>
+      <div class="section-title">言語別 充実度マトリクス</div>
+      <div class="section-sub">数値は日本語比の充実度スコア（%）。<span style="color:var(--danger)">赤=記事なし</span> / <span style="color:var(--warn)">橙=希薄(30%未満)</span> / <span style="color:var(--accent)">緑=充実</span>。</div>
+    </div>
+    <div class="matrix-scroll">
+      <table class="matrix" id="matrix"></table>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="method">
+      <h3>分析手法</h3>
+      <p>各観光地について、5言語のWikipedia APIから <code>セクション数</code>・<code>画像数</code>・<code>文字数</code> を取得します。記事が存在しない場合はスコア0。</p>
+      <p>言語によって1情報あたりの文字数が異なるため（表意文字の日本語・中国語は少ない文字数で多くの情報を表現）、文字数は言語係数で補正します。最終的な<code>充実度スコア</code>は、補正文字数・セクション数・画像数を合成し、その地点の日本語記事を100%とした相対値で表します。</p>
+      <p>充実度スコアは「英語版は文字数こそ多いが、セクション2つ・画像1枚＝実は内容が薄い」といった見かけ倒しを検出できるよう設計しています。</p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-text">長野県DMO 観光インサイトポータル — データソース: Wikipedia API（CC BY-SA） / 認証不要・無料</div>
+  </footer>
+
+</div>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loading">
+  <div class="scene">
+    <div class="mtn">
+      <svg viewBox="0 0 280 80" preserveAspectRatio="none">
+        <polygon points="0,80 50,20 80,50 120,10 160,55 210,25 280,80" fill="#1D6A4A" opacity="0.18"/>
+        <polygon points="100,10 120,30 110,35 130,55 90,55 108,32" fill="#fff" opacity="0.7"/>
+        <polygon points="190,25 210,45 200,48 218,62 165,62 188,42" fill="#fff" opacity="0.5"/>
+      </svg>
+    </div>
+    <div class="steam" style="left: 60px; animation-delay: 0s;"></div>
+    <div class="steam" style="left: 68px; animation-delay: 0.8s;"></div>
+    <div class="steam" style="left: 64px; animation-delay: 1.6s;"></div>
+    <div class="bird"><span class="bird-bob">🐦</span></div>
+  </div>
+  <div class="loading-text" id="loadText">調査の準備をしています…</div>
+  <div class="loading-prog" id="loadProg"></div>
+  <div class="loading-track"><div class="loading-fill" id="loadFill"></div></div>
+</div>
+
+<script>
+// ============================================================
+//  Wikipedia 多言語ギャップ分析  app.js
+//  観光地の追加・変更は下の PREFS を編集するだけでOK
+// ============================================================
+
+const PREFS = {
+  nagano: { label: "長野", color: "#1D6A4A", spots: [
+    "善光寺","戸隠神社","地獄谷野猿公苑","小布施町","飯縄山","黒姫山 (長野県)","野尻湖","松代 (長野市)",
+    "軽井沢","上田城","別所温泉","白糸の滝 (軽井沢町)","旧軽井沢","雲場池","海野宿","美ヶ原",
+    "松本城","上高地","安曇野市","乗鞍高原","奈良井宿","妻籠宿","馬籠宿","寝覚の床","開田高原",
+    "大王わさび農場","穂高神社","安曇野ちひろ美術館","白骨温泉","浅間温泉",
+    "諏訪大社","諏訪湖","高遠城","天竜峡","千畳敷カール","阿智村","分杭峠","元善光寺","下栗の里","昼神温泉",
+    "白馬村","栂池高原","志賀高原","野沢温泉","渋温泉 (長野県)","八ヶ岳","霧ヶ峰","姨捨","中央アルプス","燕岳"
+  ]},
+  kyoto: { label: "京都", color: "#9B4DA0", spots: [
+    "清水寺","鹿苑寺","慈照寺","伏見稲荷大社","二条城","嵐山","渡月橋","天龍寺","龍安寺","平安神宮",
+    "八坂神社","三十三間堂","南禅寺","東福寺","北野天満宮","賀茂御祖神社","賀茂別雷神社","西本願寺","東寺","知恩院",
+    "祇園","先斗町","錦市場","哲学の道","貴船神社","鞍馬寺","醍醐寺","仁和寺","高台寺","建仁寺",
+    "京都御所","大原","三千院","平等院","宇治上神社","嵯峨野","保津峡","美山町","天橋立","伊根の舟屋",
+    "京都タワー","京都国立博物館","二尊院","常寂光寺","大覚寺","祇王寺","円山公園","梅小路公園","鴨川 (淀川水系)","曼殊院"
+  ]},
+  hiroshima: { label: "広島", color: "#C9601E", spots: [
+    "原爆ドーム","広島平和記念公園","広島平和記念資料館","厳島神社","宮島","弥山","広島城","縮景園","平和記念式典","広島平和記念碑",
+    "尾道市","千光寺 (尾道市)","西瀬戸自動車道","大久野島","鞆の浦","福山城 (備後国)","三段峡","帝釈峡","世羅町","大和ミュージアム",
+    "呉市","音戸の瀬戸","江田島市","宮島水族館","広島市現代美術館","ひろしま美術館","広島県立美術館","不動院 (広島市)","三瀧寺","比治山公園",
+    "おりづるタワー","広島市民球場 (2009年)","広島護国神社","広島東照宮","三次市","君田温泉","湯来温泉","岩国城","錦帯橋","竹原市",
+    "耕三寺","生口島","因島","向島 (広島県)","平山郁夫美術館","未来心の丘","福山市","鞆の浦温泉","入船山記念館","広島県"
+  ]},
+  ishikawa: { label: "石川", color: "#2E6FA8", spots: [
+    "兼六園","金沢城","ひがし茶屋街","近江町市場","金沢21世紀美術館","主計町","にし茶屋街","長町 (金沢市)","尾山神社","金沢駅",
+    "妙立寺","鈴木大拙館","石川県立美術館","金沢市","和倉温泉","七尾市","のとじま水族館","千里浜なぎさドライブウェイ","気多大社","白米千枚田",
+    "輪島市","輪島塗","輪島朝市","禄剛埼灯台","見附島 (石川県)","珠洲市","能登半島","總持寺祖院","巌門","ヤセの断崖",
+    "山中温泉","山代温泉","片山津温泉","那谷寺","加賀市","小松市","安宅住吉神社","白山","白山比咩神社","手取峡谷",
+    "鶴来","松井秀喜ベースボールミュージアム","志賀町","羽咋市","コスモアイル羽咋","内灘町","金沢港","西田幾多郎記念哲学館","加賀温泉郷","能登金剛"
+  ]}
+};
+
+const LANGS = [
+  { code: "ja", label: "日本語", role: "base" },
+  { code: "en", label: "英語",   role: "target" },
+  { code: "zh", label: "中国語", role: "target" },
+  { code: "th", label: "タイ語", role: "target" },
+  { code: "fr", label: "フランス語", role: "target" }
+];
+
+// 文字数の言語補正係数（表意文字は密度が高い→情報量を揃えるため係数を上げる）
+// 日本語=1.0基準。英/仏/タイは表音で文字数が膨らむため割り引く。
+const CHAR_COEF = { ja: 1.0, zh: 1.05, en: 0.45, fr: 0.42, th: 0.5 };
+
+// 充実度スコアの合成重み（補正文字数 / セクション / 画像）
+const W = { chars: 0.55, sections: 0.30, images: 0.15 };
+
+// ---- Wikipedia API ----
+// origin=* でCORS回避。1記事のセクション数・画像数・本文長を取得。
+async function fetchArticle(lang, title) {
+  const base = `https://${lang}.wikipedia.org/w/api.php`;
+  // langlinks 経由ではなく、まず日本語タイトルからその言語版タイトルを引く必要がある。
+  // ja以外は ja記事の言語間リンクで解決する方式を呼び出し側で行う。ここでは与えられたtitleで直接取得。
+  const params = new URLSearchParams({
+    action: "query", format: "json", origin: "*",
+    titles: title, prop: "extracts|images|sections",
+    explaintext: "1", exsectionformat: "plain"
+  });
+  // sections は prop=query では取れないので parse を併用
+  const url = `${base}?${params.toString()}`;
+  try {
+    const r = await fetch(url);
+    const j = await r.json();
+    const pages = j?.query?.pages || {};
+    const page = Object.values(pages)[0];
+    if (!page || page.missing !== undefined) return { exists: false, chars: 0, images: 0, sections: 0 };
+    const chars = (page.extract || "").length;
+    const images = (page.images || []).filter(im => !/\.svg$/i.test(im.title||"")).length;
+    return { exists: true, chars, images, sections: 0, _title: page.title };
+  } catch (e) {
+    return { exists: null, chars: 0, images: 0, sections: 0, error: true };
+  }
+}
+
+// セクション数は parse API で取得
+async function fetchSections(lang, title) {
+  const base = `https://${lang}.wikipedia.org/w/api.php`;
+  const params = new URLSearchParams({ action: "parse", format: "json", origin: "*", page: title, prop: "sections" });
+  try {
+    const r = await fetch(`${base}?${params.toString()}`);
+    const j = await r.json();
+    return (j?.parse?.sections || []).length;
+  } catch (e) { return 0; }
+}
+
+// ja記事 → 各言語版タイトルを言語間リンクで解決
+async function resolveLangTitles(jaTitle) {
+  const base = `https://ja.wikipedia.org/w/api.php`;
+  const params = new URLSearchParams({ action: "query", format: "json", origin: "*", titles: jaTitle, prop: "langlinks", lllimit: "500" });
+  const map = { ja: jaTitle };
+  try {
+    const r = await fetch(`${base}?${params.toString()}`);
+    const j = await r.json();
+    const page = Object.values(j?.query?.pages || {})[0];
+    (page?.langlinks || []).forEach(ll => { map[ll.lang] = ll["*"]; });
+  } catch (e) {}
+  return map;
+}
+
+// 1スポットの全言語データを取得
+async function fetchSpot(jaTitle) {
+  const titles = await resolveLangTitles(jaTitle);
+  const result = {};
+  for (const L of LANGS) {
+    const t = titles[L.code];
+    if (!t) { result[L.code] = { exists: false, chars: 0, images: 0, sections: 0 }; continue; }
+    const art = await fetchArticle(L.code, t);
+    if (art.exists) art.sections = await fetchSections(L.code, t);
+    result[L.code] = art;
+  }
+  return result;
+}
+
+// ---- スコア計算 ----
+function rawScore(d, lang) {
+  if (!d || !d.exists) return 0;
+  const c = d.chars * (CHAR_COEF[lang] || 0.5);
+  return W.chars * c + W.sections * (d.sections * 800) + W.images * (d.images * 1500);
+}
+// 日本語比（%）
+function relScore(spotData, lang) {
+  const baseRaw = rawScore(spotData.ja, "ja");
+  if (baseRaw <= 0) return spotData[lang]?.exists ? 100 : 0;
+  const r = rawScore(spotData[lang], lang) / baseRaw * 100;
+  return Math.max(0, Math.round(r));
+}
+
+// ============================================================
+//  描画
+// ============================================================
+function classifyCell(pct, exists) {
+  if (!exists) return "none";
+  if (pct < 30) return "thin";
+  return "ok";
+}
+
+function renderPrefRank(store) {
+  const rows = Object.entries(PREFS).map(([key, pref]) => {
+    const langAvg = {};
+    LANGS.filter(l => l.role === "target").forEach(L => {
+      const vals = pref.spots.map(s => relScore(store[key][s], L.code));
+      langAvg[L.code] = Math.round(vals.reduce((a,b)=>a+b,0) / vals.length);
+    });
+    const overall = Math.round(Object.values(langAvg).reduce((a,b)=>a+b,0) / Object.keys(langAvg).length);
+    return { key, pref, langAvg, overall };
+  }).sort((a,b) => b.overall - a.overall);
+
+  const maxOverall = Math.max(...rows.map(r=>r.overall), 1);
+  const html = rows.map(r => {
+    const bars = LANGS.filter(l=>l.role==="target").map(L => {
+      const v = r.langAvg[L.code];
+      return `<div class="lang-bar-item">
+        <div class="lang-bar-label"><span>${L.label}</span><span>${v}%</span></div>
+        <div class="lang-bar-bg"><div class="lang-bar-fill" style="width:${v}%; background:${r.pref.color}"></div></div>
+      </div>`;
+    }).join("");
+    return `<div class="pref-row">
+      <div class="pref-row-top">
+        <span class="pref-dot" style="background:${r.pref.color}"></span>
+        <span class="pref-name">${r.pref.label}</span>
+        <span class="pref-score"><b>${r.overall}</b>%（対象4言語の平均充実度）</span>
+      </div>
+      <div class="lang-bars">${bars}</div>
+    </div>`;
+  }).join("");
+  document.getElementById("prefRank").innerHTML = html;
+}
+
+function renderWorst(store) {
+  const nagano = PREFS.nagano;
+  const scored = nagano.spots.map(s => {
+    const targets = LANGS.filter(l=>l.role==="target");
+    const scores = targets.map(L => ({ code:L.code, label:L.label, pct: relScore(store.nagano[s], L.code), exists: store.nagano[s][L.code]?.exists }));
+    const avg = Math.round(scores.reduce((a,b)=>a+b.pct,0)/scores.length);
+    const missing = scores.filter(x=>!x.exists);
+    const thin = scores.filter(x=>x.exists && x.pct < 30);
+    return { spot:s, avg, missing, thin };
+  }).sort((a,b)=> a.avg - b.avg).slice(0, 15);
+
+  const html = scored.map((r,i) => {
+    const flags = [
+      ...r.missing.map(m=>`<span class="flag miss">${m.label} なし</span>`),
+      ...r.thin.map(t=>`<span class="flag thin">${t.label} 希薄</span>`)
+    ].slice(0,5).join("");
+    return `<div class="worst-row">
+      <span class="worst-rank">${i+1}</span>
+      <span class="worst-name">${r.spot}</span>
+      <span class="worst-flags">${flags || '<span class="flag thin">要確認</span>'}</span>
+    </div>`;
+  }).join("");
+  document.getElementById("worstList").innerHTML = html;
+}
+
+function renderMatrix(store) {
+  const nagano = PREFS.nagano;
+  const head = `<thead><tr><th class="spot" style="text-align:left">観光地</th>${LANGS.map(L=>`<th>${L.label}${L.role==='base'?'<br><span style="font-weight:400;color:var(--text-muted)">基準</span>':''}</th>`).join("")}</tr></thead>`;
+  const body = nagano.spots.map(s => {
+    const cells = LANGS.map(L => {
+      const d = store.nagano[s][L.code];
+      if (L.role === "base") {
+        return `<td><span class="cell base">${d?.exists ? '100' : '—'}</span></td>`;
+      }
+      const pct = relScore(store.nagano[s], L.code);
+      const cls = classifyCell(pct, d?.exists);
+      const txt = d?.exists ? pct : '✕';
+      return `<td><span class="cell ${cls}">${txt}</span></td>`;
+    }).join("");
+    return `<tr><td class="spot">${s}</td>${cells}</tr>`;
+  }).join("");
+  document.getElementById("matrix").innerHTML = head + `<tbody>${body}</tbody>`;
+}
+
+function renderAll(store) {
+  renderPrefRank(store);
+  renderWorst(store);
+  renderMatrix(store);
+}
+
+// ============================================================
+//  ローディング演出（長野モチーフ）
+// ============================================================
+const LOAD_MSGS = [
+  "善光寺で旅の安全を祈願しています…",
+  "雷鳥が記事を探しに山を歩いています…",
+  "そばを茹でながらデータを待っています…",
+  "温泉に浸かって通信の戻りを待っています…",
+  "北アルプスの向こうから記事が届きます…",
+  "わさびを擦りつつ集計しています…",
+  "リンゴをかじりながら言語間リンクを追跡中…"
+];
+let msgTimer = null, msgIdx = 0;
+function showLoading() {
+  const ov = document.getElementById("loading");
+  ov.classList.add("active");
+  msgIdx = 0;
+  document.getElementById("loadText").textContent = LOAD_MSGS[0];
+  msgTimer = setInterval(() => {
+    msgIdx = (msgIdx + 1) % LOAD_MSGS.length;
+    document.getElementById("loadText").textContent = LOAD_MSGS[msgIdx];
+  }, 2600);
+}
+function updateLoading(done, total) {
+  const pct = Math.round(done/total*100);
+  document.getElementById("loadFill").style.width = pct + "%";
+  document.getElementById("loadProg").textContent = `${done} / ${total} 地点を調査済み（${pct}%）`;
+}
+function hideLoading() {
+  document.getElementById("loading").classList.remove("active");
+  if (msgTimer) clearInterval(msgTimer);
+}
+
+// ============================================================
+//  リアルタイム調査
+// ============================================================
+async function runLiveScan() {
+  const btn = document.getElementById("rescanBtn");
+  btn.disabled = true;
+  showLoading();
+  const store = { nagano:{}, kyoto:{}, hiroshima:{}, ishikawa:{} };
+  const allTasks = [];
+  Object.entries(PREFS).forEach(([key, pref]) => pref.spots.forEach(s => allTasks.push({key, s})));
+  const total = allTasks.length;
+  let done = 0;
+  updateLoading(0, total);
+
+  // 順次（レート制限に配慮しつつ、県内は少し並列）
+  const CONCURRENCY = 4;
+  let cursor = 0;
+  async function worker() {
+    while (cursor < allTasks.length) {
+      const idx = cursor++;
+      const { key, s } = allTasks[idx];
+      store[key][s] = await fetchSpot(s);
+      done++;
+      updateLoading(done, total);
+    }
+  }
+  await Promise.all(Array.from({length: CONCURRENCY}, worker));
+
+  renderAll(store);
+  saveCache(store);
+  document.getElementById("meta-time").textContent = new Date().toLocaleString("ja-JP");
+  hideLoading();
+  btn.disabled = false;
+}
+
+// ---- 簡易キャッシュ（メモリのみ。ブラウザstorageは使わない） ----
+let MEM_CACHE = null;
+function saveCache(store){ MEM_CACHE = store; }
+
+// ============================================================
+//  初期表示：事前データ（プレースホルダ）を即表示 → 自動でLIVE更新
+// ============================================================
+// 事前データが無い初回は、薄いダミーを即描画してから実データを取りにいく
+function buildPlaceholder() {
+  const store = { nagano:{}, kyoto:{}, hiroshima:{}, ishikawa:{} };
+  Object.entries(PREFS).forEach(([key, pref]) => {
+    pref.spots.forEach((s, i) => {
+      const ja = { exists:true, chars: 6000 + (i*137%9000), images: 3 + i%8, sections: 4 + i%6 };
+      const mk = (mult, prob) => (i%10 < prob*10)
+        ? { exists:true, chars: Math.round(ja.chars*mult), images: Math.max(0,Math.round(ja.images*mult)), sections: Math.max(1,Math.round(ja.sections*mult)) }
+        : { exists:false, chars:0, images:0, sections:0 };
+      store[key][s] = {
+        ja,
+        en: mk(0.6, 0.7),
+        zh: mk(0.45, 0.55),
+        th: mk(0.25, 0.25),
+        fr: mk(0.4, 0.45)
+      };
+    });
+  });
+  return store;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  // 1) 事前データ（プレースホルダ）を即描画
+  const ph = buildPlaceholder();
+  renderAll(ph);
+  document.getElementById("meta-time").textContent = "サンプル表示中（再調査で最新化）";
+
+  // 2) ボタン
+  document.getElementById("rescanBtn").addEventListener("click", runLiveScan);
+
+  // 3) 初回は自動でLIVE調査を1回走らせて実データに置換
+  //    （重いので、少し待ってから開始）
+  setTimeout(runLiveScan, 600);
+});
+
+</script>
+</body>
+</html>
