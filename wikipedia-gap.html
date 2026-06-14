@@ -161,6 +161,8 @@
     <b>中国語について：</b>中国語版Wikipediaは1つのみで、簡体字（本土・シンガポール）と繁体字（台湾・香港）は同一記事を自動変換して表示しています。本分析では中国語1言語として扱います。中国本土ではWikipediaの閲覧が制限されていますが、台湾・香港・海外華僑の利用を想定し対象に含めています。
   </div>
 
+  <div class="note-strip" id="excluded-note" style="display:none; background:var(--warn-bg); color:var(--warn);"></div>
+
   <section class="section" id="sec-pref">
     <div class="section-head">
       <div class="section-label">切り口 1 — マクロ</div>
@@ -233,33 +235,36 @@
 
 const PREFS = {
   nagano: { label: "長野", color: "#1D6A4A", spots: [
-    "善光寺","戸隠神社","地獄谷野猿公苑","小布施町","飯縄山","黒姫山 (長野県)","野尻湖","松代 (長野市)",
-    "軽井沢","上田城","別所温泉","白糸の滝 (軽井沢町)","旧軽井沢","雲場池","海野宿","美ヶ原",
-    "松本城","上高地","安曇野市","乗鞍高原","奈良井宿","妻籠宿","馬籠宿","寝覚の床","開田高原",
-    "大王わさび農場","穂高神社","安曇野ちひろ美術館","白骨温泉","浅間温泉",
-    "諏訪大社","諏訪湖","高遠城","天竜峡","千畳敷カール","阿智村","分杭峠","元善光寺","下栗の里","昼神温泉",
-    "白馬村","栂池高原","志賀高原","野沢温泉","渋温泉 (長野県)","八ヶ岳","霧ヶ峰","姨捨","中央アルプス","燕岳"
+    "善光寺","戸隠神社","地獄谷野猿公苑","小布施町","松代 (長野市)",
+    "軽井沢","上田城","別所温泉","海野宿","美ヶ原",
+    "松本城","上高地","安曇野市","乗鞍高原","奈良井宿",
+    "妻籠宿","馬籠宿","寝覚の床","大王わさび農場","穂高神社",
+    "諏訪大社","諏訪湖","高遠城","天竜峡","阿智村",
+    "白馬村","志賀高原","野沢温泉","八ヶ岳","霧ヶ峰"
   ]},
   kyoto: { label: "京都", color: "#9B4DA0", spots: [
-    "清水寺","鹿苑寺","慈照寺","伏見稲荷大社","二条城","嵐山","渡月橋","天龍寺","龍安寺","平安神宮",
-    "八坂神社","三十三間堂","南禅寺","東福寺","北野天満宮","賀茂御祖神社","賀茂別雷神社","西本願寺","東寺","知恩院",
-    "祇園","先斗町","錦市場","哲学の道","貴船神社","鞍馬寺","醍醐寺","仁和寺","高台寺","建仁寺",
-    "京都御所","大原","三千院","平等院","宇治上神社","嵯峨野","保津峡","美山町","天橋立","伊根の舟屋",
-    "京都タワー","京都国立博物館","二尊院","常寂光寺","大覚寺","祇王寺","円山公園","梅小路公園","鴨川 (淀川水系)","曼殊院"
+    "清水寺","鹿苑寺","慈照寺","伏見稲荷大社","二条城",
+    "嵐山","渡月橋","天龍寺","龍安寺","平安神宮",
+    "八坂神社","三十三間堂","南禅寺","東福寺","北野天満宮",
+    "賀茂御祖神社","賀茂別雷神社","西本願寺","東寺","知恩院",
+    "祇園","錦市場","哲学の道","貴船神社","鞍馬寺",
+    "醍醐寺","仁和寺","高台寺","平等院","天橋立"
   ]},
   hiroshima: { label: "広島", color: "#C9601E", spots: [
-    "原爆ドーム","広島平和記念公園","広島平和記念資料館","厳島神社","宮島","弥山","広島城","縮景園","平和記念式典","広島平和記念碑",
-    "尾道市","千光寺 (尾道市)","西瀬戸自動車道","大久野島","鞆の浦","福山城 (備後国)","三段峡","帝釈峡","世羅町","大和ミュージアム",
-    "呉市","音戸の瀬戸","江田島市","宮島水族館","広島市現代美術館","ひろしま美術館","広島県立美術館","不動院 (広島市)","三瀧寺","比治山公園",
-    "おりづるタワー","広島市民球場 (2009年)","広島護国神社","広島東照宮","三次市","君田温泉","湯来温泉","岩国城","錦帯橋","竹原市",
-    "耕三寺","生口島","因島","向島 (広島県)","平山郁夫美術館","未来心の丘","福山市","鞆の浦温泉","入船山記念館","広島県"
+    "原爆ドーム","広島平和記念公園","広島平和記念資料館","厳島神社","宮島",
+    "弥山","広島城","縮景園","尾道市","千光寺 (尾道市)",
+    "大久野島","鞆の浦","福山城 (備後国)","三段峡","帝釈峡",
+    "大和ミュージアム","呉市","江田島市","広島県立美術館","ひろしま美術館",
+    "おりづるタワー","広島東照宮","三次市","岩国城","錦帯橋",
+    "竹原市","耕三寺","生口島","因島","平山郁夫美術館"
   ]},
   ishikawa: { label: "石川", color: "#2E6FA8", spots: [
-    "兼六園","金沢城","ひがし茶屋街","近江町市場","金沢21世紀美術館","主計町","にし茶屋街","長町 (金沢市)","尾山神社","金沢駅",
-    "妙立寺","鈴木大拙館","石川県立美術館","金沢市","和倉温泉","七尾市","のとじま水族館","千里浜なぎさドライブウェイ","気多大社","白米千枚田",
-    "輪島市","輪島塗","輪島朝市","禄剛埼灯台","見附島 (石川県)","珠洲市","能登半島","總持寺祖院","巌門","ヤセの断崖",
-    "山中温泉","山代温泉","片山津温泉","那谷寺","加賀市","小松市","安宅住吉神社","白山","白山比咩神社","手取峡谷",
-    "鶴来","松井秀喜ベースボールミュージアム","志賀町","羽咋市","コスモアイル羽咋","内灘町","金沢港","西田幾多郎記念哲学館","加賀温泉郷","能登金剛"
+    "兼六園","金沢城","ひがし茶屋街","近江町市場","金沢21世紀美術館",
+    "尾山神社","妙立寺","鈴木大拙館","石川県立美術館","金沢市",
+    "和倉温泉","七尾市","千里浜なぎさドライブウェイ","気多大社","白米千枚田",
+    "輪島市","輪島塗","見附島 (石川県)","珠洲市","能登半島",
+    "總持寺祖院","巌門","山中温泉","山代温泉","那谷寺",
+    "加賀市","小松市","白山","白山比咩神社","加賀温泉郷"
   ]}
 };
 
@@ -344,6 +349,13 @@ async function fetchSpot(jaTitle) {
   return result;
 }
 
+// 日本語記事が存在するスポットだけを返す（無いものは分析対象外）
+function validSpots(prefKey, store){
+  return PREFS[prefKey].spots.filter(s => store[prefKey] && store[prefKey][s] && store[prefKey][s].ja && store[prefKey][s].ja.exists);
+}
+// 除外件数を控えておく
+let EXCLUDED = {};
+
 // ---- スコア計算 ----
 function rawScore(d, lang) {
   if (!d || !d.exists) return 0;
@@ -370,8 +382,9 @@ function classifyCell(pct, exists) {
 function renderPrefRank(store) {
   const rows = Object.entries(PREFS).map(([key, pref]) => {
     const langAvg = {};
+    const vspots = validSpots(key, store);
     LANGS.filter(l => l.role === "target").forEach(L => {
-      const vals = pref.spots.map(s => relScore(store[key][s], L.code));
+      const vals = vspots.map(s => relScore(store[key][s], L.code));
       langAvg[L.code] = Math.round(vals.reduce((a,b)=>a+b,0) / vals.length);
     });
     const overall = Math.round(Object.values(langAvg).reduce((a,b)=>a+b,0) / Object.keys(langAvg).length);
@@ -400,8 +413,8 @@ function renderPrefRank(store) {
 }
 
 function renderWorst(store) {
-  const nagano = PREFS.nagano;
-  const scored = nagano.spots.map(s => {
+  const vspots = validSpots("nagano", store);
+  const scored = vspots.map(s => {
     const targets = LANGS.filter(l=>l.role==="target");
     const scores = targets.map(L => ({ code:L.code, label:L.label, pct: relScore(store.nagano[s], L.code), exists: store.nagano[s][L.code]?.exists }));
     const avg = Math.round(scores.reduce((a,b)=>a+b.pct,0)/scores.length);
@@ -425,9 +438,9 @@ function renderWorst(store) {
 }
 
 function renderMatrix(store) {
-  const nagano = PREFS.nagano;
+  const vspots = validSpots("nagano", store);
   const head = `<thead><tr><th class="spot" style="text-align:left">観光地</th>${LANGS.map(L=>`<th>${L.label}${L.role==='base'?'<br><span style="font-weight:400;color:var(--text-muted)">基準</span>':''}</th>`).join("")}</tr></thead>`;
-  const body = nagano.spots.map(s => {
+  const body = vspots.map(s => {
     const cells = LANGS.map(L => {
       const d = store.nagano[s][L.code];
       if (L.role === "base") {
@@ -444,6 +457,26 @@ function renderMatrix(store) {
 }
 
 function renderAll(store) {
+  // 日本語記事なしの除外件数を集計
+  EXCLUDED = {};
+  let totalEx = 0;
+  Object.keys(PREFS).forEach(key => {
+    const all = PREFS[key].spots.length;
+    const valid = validSpots(key, store).length;
+    EXCLUDED[key] = all - valid;
+    totalEx += (all - valid);
+  });
+  const exEl = document.getElementById("excluded-note");
+  if (exEl) {
+    if (totalEx > 0) {
+      const detail = Object.entries(EXCLUDED).filter(([k,v])=>v>0)
+        .map(([k,v])=>`${PREFS[k].label} ${v}件`).join(" / ");
+      exEl.style.display = "block";
+      exEl.innerHTML = `<b>分析対象から除外：</b>日本語Wikipedia記事が確認できなかった ${totalEx} 地点を集計から除外しました（${detail}）。記事タイトルの相違の可能性もあります。`;
+    } else {
+      exEl.style.display = "none";
+    }
+  }
   renderPrefRank(store);
   renderWorst(store);
   renderMatrix(store);
@@ -470,7 +503,7 @@ function showLoading() {
   msgTimer = setInterval(() => {
     msgIdx = (msgIdx + 1) % LOAD_MSGS.length;
     document.getElementById("loadText").textContent = LOAD_MSGS[msgIdx];
-  }, 2600);
+  }, 4200);
 }
 function updateLoading(done, total) {
   const pct = Math.round(done/total*100);
